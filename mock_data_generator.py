@@ -71,5 +71,7 @@ if st.button("🚀 Generate Mock Data"):
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
 '''
+import streamlit as st
+
 st.write('Hello')
 
