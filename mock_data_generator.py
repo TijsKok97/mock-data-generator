@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from faker import Faker
+import xlsxwriter as Writer
 
 # Initialize Faker
 fake = Faker()
