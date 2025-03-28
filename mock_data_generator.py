@@ -6,33 +6,40 @@ from faker import Faker
 fake = Faker()
 
 # Title of the app
-st.title("📊 Mock Data Generator")
+st.title("📊 Advanced Mock Data Generator")
 
-# User input: Number of rows
-num_rows = st.number_input("🔢 Enter the number of rows:", min_value=1, max_value=10000, value=100)
+# User input: Number of sheets
+num_sheets = st.number_input("📑 Number of Sheets:", min_value=1, max_value=10, value=1)
 
-# User input: Select columns
-st.write("🛠️ **Define your dataset structure**")
-columns = {}
+# Dictionary to store sheet configurations
+sheets_config = {}
 
-# Default column types for selection
-column_types = {
-    "Name": "name",
-    "Email": "email",
-    "Date": "date",
-    "Integer (1-1000)": "integer",
-    "City": "city",
-    "Company": "company"
-}
+for sheet_index in range(num_sheets):
+    with st.expander(f"⚙️ Configure Sheet {sheet_index + 1}"):
+        sheet_name = st.text_input(f"📄 Sheet {sheet_index + 1} Name:", value=f"Sheet_{sheet_index + 1}")
+        num_rows = st.number_input(f"🔢 Number of rows for {sheet_name}:", min_value=1, max_value=10000, value=100, key=f"rows_{sheet_index}")
 
-# Let user add columns
-num_columns = st.number_input("➕ How many columns?", min_value=1, max_value=10, value=3)
-for i in range(num_columns):
-    col_name = st.text_input(f"Column {i+1} Name:", value=f"Column_{i+1}")
-    col_type = st.selectbox(f"Column {i+1} Type:", list(column_types.keys()), key=f"type_{i}")
-    columns[col_name] = column_types[col_type]
+        # Column selection
+        st.write("🛠️ **Define the dataset structure**")
+        columns = {}
+        column_types = {
+            "Name": "name",
+            "Email": "email",
+            "Date": "date",
+            "Integer (1-1000)": "integer",
+            "City": "city",
+            "Company": "company"
+        }
 
-# Generate mock data
+        num_columns = st.number_input(f"➕ How many columns in {sheet_name}?", min_value=1, max_value=10, value=3, key=f"cols_{sheet_index}")
+        for i in range(num_columns):
+            col_name = st.text_input(f"Column {i+1} Name (Sheet {sheet_index + 1}):", value=f"Column_{i+1}", key=f"colname_{sheet_index}_{i}")
+            col_type = st.selectbox(f"Column {i+1} Type (Sheet {sheet_index + 1}):", list(column_types.keys()), key=f"type_{sheet_index}_{i}")
+            columns[col_name] = column_types[col_type]
+
+        sheets_config[sheet_name] = {"num_rows": num_rows, "columns": columns}
+
+# Function to generate mock data
 def generate_mock_data(columns, num_rows):
     dataset = {}
     for column_name, data_type in columns.items():
@@ -50,22 +57,22 @@ def generate_mock_data(columns, num_rows):
             dataset[column_name] = [fake.company() for _ in range(num_rows)]
     return pd.DataFrame(dataset)
 
-# Button to generate and display data
+# Generate and save data
 if st.button("🚀 Generate Mock Data"):
-    df = generate_mock_data(columns, num_rows)
-    st.success("✅ Dataset created successfully!")
-    st.dataframe(df)  # Show the dataset preview
+    with st.spinner("Generating data..."):
+        excel_file = "mock_data.xlsx"
+        with pd.ExcelWriter(excel_file, engine="xlsxwriter") as writer:
+            for sheet_name, config in sheets_config.items():
+                df = generate_mock_data(config["columns"], config["num_rows"])
+                df.to_excel(writer, sheet_name=sheet_name, index=False)
 
-    # Save as Excel
-    file_name = "mock_data.xlsx"
-    df.to_excel(file_name, index=False)
+        st.success("✅ Excel file created successfully!")
 
-    # Create a download button
-    with open(file_name, "rb") as file:
-        st.download_button(
-            label="📥 Download Excel File",
-            data=file,
-            file_name=file_name,
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-
+        # Provide download button
+        with open(excel_file, "rb") as file:
+            st.download_button(
+                label="📥 Download Excel File",
+                data=file,
+                file_name=excel_file,
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
