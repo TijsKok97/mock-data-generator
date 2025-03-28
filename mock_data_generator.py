@@ -7,7 +7,7 @@ import xlsxwriter as wt
 fake = Faker()
 
 # Welcome message
-st.markdown("### 📢 Welcome to MockedUp! 🎉\n Here, you can quickly generate randomized datasets for any purpose. Use the settings and click the button below to generate your data.")
+st.markdown("### 📢 Welcome to MockedUp! 🎉\n Here, you can quickly generate randomized datasets for any purpose. Configure the settings and click the button below to generate your data.")
 
 
 # User input: Number of sheets
