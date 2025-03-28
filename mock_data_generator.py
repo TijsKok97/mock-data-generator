@@ -28,10 +28,23 @@ for sheet_index in range(num_sheets):
             "Name": "name",
             "Email": "email",
             "Date": "date",
-            "Integer (1-1000)": "integer",
+            "Address": "address",  # Full address
+            "Street Address": "street_address",
             "City": "city",
-            "Company": "company"
-        }
+            "State": "state",
+            "Zipcode": "zipcode",
+            "Country": "country",
+            "Birthdate": "birthdate",
+            "Phone Number": "phone_number",
+            "Company": "company",
+            "Job Title": "job",
+            "URL": "url",
+            "Boolean": "boolean",
+            "Credit Card": "credit_card",
+            "Color": "color",
+            "Random Text": "text"
+}
+
 
         num_columns = st.number_input(f"➕ How many columns in {sheet_name}?", min_value=1, max_value=10, value=3, key=f"cols_{sheet_index}")
         for i in range(num_columns):
@@ -51,13 +64,38 @@ def generate_mock_data(columns, num_rows):
             dataset[column_name] = [fake.email() for _ in range(num_rows)]
         elif data_type == "date":
             dataset[column_name] = [fake.date_this_decade() for _ in range(num_rows)]
-        elif data_type == "integer":
-            dataset[column_name] = [fake.random_int(min=1, max=1000) for _ in range(num_rows)]
+        elif data_type == "address":
+            dataset[column_name] = [fake.address() for _ in range(num_rows)]
+        elif data_type == "street_address":
+            dataset[column_name] = [fake.street_address() for _ in range(num_rows)]
         elif data_type == "city":
             dataset[column_name] = [fake.city() for _ in range(num_rows)]
+        elif data_type == "state":
+            dataset[column_name] = [fake.state() for _ in range(num_rows)]
+        elif data_type == "zipcode":
+            dataset[column_name] = [fake.zipcode() for _ in range(num_rows)]
+        elif data_type == "country":
+            dataset[column_name] = [fake.country() for _ in range(num_rows)]
+        elif data_type == "birthdate":
+            dataset[column_name] = [fake.date_of_birth() for _ in range(num_rows)]
+        elif data_type == "phone_number":
+            dataset[column_name] = [fake.phone_number() for _ in range(num_rows)]
         elif data_type == "company":
             dataset[column_name] = [fake.company() for _ in range(num_rows)]
+        elif data_type == "job":
+            dataset[column_name] = [fake.job() for _ in range(num_rows)]
+        elif data_type == "url":
+            dataset[column_name] = [fake.url() for _ in range(num_rows)]
+        elif data_type == "boolean":
+            dataset[column_name] = [fake.boolean() for _ in range(num_rows)]
+        elif data_type == "credit_card":
+            dataset[column_name] = [fake.credit_card_number() for _ in range(num_rows)]
+        elif data_type == "color":
+            dataset[column_name] = [fake.color_name() for _ in range(num_rows)]
+        elif data_type == "text":
+            dataset[column_name] = [fake.text() for _ in range(num_rows)]
     return pd.DataFrame(dataset)
+
 
 # Generate and save data
 if st.button("🚀 Generate Mock Data"):
