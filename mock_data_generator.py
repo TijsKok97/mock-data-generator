@@ -7,11 +7,11 @@ import xlsxwriter as wt
 fake = Faker()
 
 # Welcome message
-st.markdown("### 📢 Welcome to MockedUp! 🎉\n Here, you can quickly generate randomized datasets for any purpose. Configure the settings and click the button below to generate your data.")
+st.markdown("### 📢 Welcome to MockedUp! 🎉\n Here, you can quickly generate randomized datasets for any purpose. Configure the settings and click the button below to generate your data. For now, it's possible to generate this data into an Excel file.")
 
 
 # User input: Number of sheets
-num_sheets = st.number_input("📑 Number of Sheets:", min_value=1, max_value=10, value=1)
+num_sheets = st.number_input("📑 Number of sheets inside your Excel file:", min_value=1, max_value=10, value=1)
 
 # Dictionary to store sheet configurations
 sheets_config = {}
