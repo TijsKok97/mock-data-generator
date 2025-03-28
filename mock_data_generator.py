@@ -1,5 +1,3 @@
-''' input("Press Enter to exit...")
-
 import streamlit as st
 import pandas as pd
 from faker import Faker
@@ -70,8 +68,4 @@ if st.button("🚀 Generate Mock Data"):
             file_name=file_name,
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
-'''
-import streamlit as st
-
-st.write('Hello')
 
