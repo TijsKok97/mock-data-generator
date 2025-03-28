@@ -1,4 +1,4 @@
-input("Press Enter to exit...")
+''' input("Press Enter to exit...")
 
 import streamlit as st
 import pandas as pd
@@ -70,3 +70,6 @@ if st.button("🚀 Generate Mock Data"):
             file_name=file_name,
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
+'''
+st.write('Hello')
+
