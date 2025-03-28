@@ -7,7 +7,7 @@ import xlsxwriter as wt
 fake = Faker()
 
 # Title of the app
-st.title("📊 Mocked up")
+st.title("📊 Let's mock it up")
 
 # User input: Number of sheets
 num_sheets = st.number_input("📑 Number of Sheets:", min_value=1, max_value=10, value=1)
