@@ -19,7 +19,7 @@ sheets_config = {}
 for sheet_index in range(num_sheets):
     with st.expander(f"⚙️ Configure Sheet {sheet_index + 1}"):
         sheet_name = st.text_input(f"📄 Sheet {sheet_index + 1} Name:", value=f"Sheet_{sheet_index + 1}")
-        num_rows = st.number_input(f"🔢 Number of rows for {sheet_name}:", min_value=1, max_value=10000, value=100, key=f"rows_{sheet_index}")
+        num_rows = st.number_input(f"🔢 Number of rows for {sheet_name}:", min_value=1, max_value=100000, value=100, key=f"rows_{sheet_index}")
 
         # Column selection
         st.write("🛠️ **Define the dataset structure**")
