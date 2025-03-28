@@ -6,11 +6,9 @@ import xlsxwriter as wt
 # Initialize Faker
 fake = Faker()
 
-# Title of the app
-st.title("📊 Let's mock it up!")
-
 # Welcome message
-st.markdown("### \nCustomize your dataset with multiple sheets and flexible options.")
+st.markdown("### 📢 Welcome to the Advanced Mock Data Generator! 🎉\nCustomize your dataset with multiple sheets and flexible options.")
+
 
 # User input: Number of sheets
 num_sheets = st.number_input("📑 Number of Sheets:", min_value=1, max_value=10, value=1)
