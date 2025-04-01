@@ -46,7 +46,7 @@ if mode == "AI Chatbot Mode":
     if st.button("Generate Model Suggestion") and user_input:
         with st.spinner("Consulting AI to build your model..."):
             try:
-                response = openai.ChatCompletion.create(
+                response = openai.chat.completions.create(
                     model="gpt-4",
                     messages=[
                         {"role": "system", "content": "You are a data model expert. Given a user description, output a JSON dictionary with two top-level keys: 'dim_tables' and 'fact_tables'. Each should be a dictionary where keys are table names and values are dictionaries with 'columns' (a dictionary of column_name: type_string) and 'num_rows' (an integer). Types can be: String, Integer, Boolean, City, Name, Date, Email."},
