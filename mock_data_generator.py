@@ -2,11 +2,10 @@ import streamlit as st
 import pandas as pd
 from faker import Faker
 import xlsxwriter as wt
-import openai as oa
-import os as os
+import openai
 
-# Set your OpenAI API key
-openai.api_key = st.secrets["OPENAI_API_KEY"]  # Make sure to set this in your environment or Streamlit secrets
+# Set your OpenAI API key from Streamlit secrets
+openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 # Initialize Faker
 fake = Faker()
