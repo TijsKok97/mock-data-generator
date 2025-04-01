@@ -7,7 +7,7 @@ import xlsxwriter as wt
 fake = Faker()
 
 # Welcome message
-st.markdown("### 📊 Welcome to Dimensional Model Generator for Power BI 🚀")
+st.markdown("### 📊 Welcome to MockedUp! 🚀")
 st.write("Define your dataset structure either manually or through AI-powered suggestions!")
 
 # User input: Choose number of tables
