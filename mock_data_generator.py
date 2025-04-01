@@ -88,7 +88,7 @@ if mode == "Manual Builder Mode":
             num_columns = st.number_input(f"Number of Columns for {table_name}", min_value=1, max_value=10, value=3, key=f"fact_columns_{i}")
             linked_dimensions = []
             for dim_name in dim_tables:
-                if st.checkbox(f"Link to {dim_name} for {table_name}", False, key=f"link_to_{dim_name}_{table_name}"):
+                if st.checkbox(f"Link this fact table to {dim_name} with a key", False, key=f"link_to_{dim_name}_{table_name}"):
                     linked_dimensions.append(dim_name)
             for c in range(num_columns):
                 column_name = st.text_input(f"Column {c+1} Name for {table_name}", f"Column_{c+1}", key=f"{table_name}_fact_col_name_{c}")
