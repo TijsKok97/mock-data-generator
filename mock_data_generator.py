@@ -124,15 +124,16 @@ if st.button("🚀 Generate Mock Data"):
         # Create the Excel file in memory
         buffer = io.BytesIO()
         with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-            for table_name, df in excel_data.items():
-                df.to_excel(writer, sheet_name=table_name, index=False)
-            writer.save()
-        
+        for table_name, df in excel_data.items():
+        df.to_excel(writer, sheet_name=table_name, index=False)
+
+        # Now that the buffer is populated, you can provide it for downloading
         st.success("✅ Excel file created successfully!")
         buffer.seek(0)
         st.download_button(
             label="📥 Download Excel File",
             data=buffer,
             file_name="mock_data.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+    m        ime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
+
