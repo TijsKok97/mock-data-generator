@@ -151,7 +151,6 @@ if st.button("🚀 Generate Mock Data"):
 # **AI Chatbot Mode**
 if mode == "AI Chatbot Mode":
     st.title("ChatGPT-like Clone")
-    client = openai.ChatCompletion
     
     if "openai_model" not in st.session_state:
         st.session_state["openai_model"] = "gpt-3.5-turbo"
@@ -170,7 +169,7 @@ if mode == "AI Chatbot Mode":
             st.markdown(prompt)
 
         with st.chat_message("assistant"):
-            stream = client.create(
+            stream = openai.ChatCompletion.create(
                 model=st.session_state["openai_model"],
                 messages=[{"role": m["role"], "content": m["content"]} for m in st.session_state.messages],
                 stream=True,
