@@ -57,35 +57,43 @@ if mode == "Manual Builder Mode":
     # Table configuration
     for i in range(num_dims):
         with st.expander(f"Dimension Table {i+1}"):
-            table_name = st.text_input(f"Table Name (Dimension {i+1})", f"Dim_Table_{i+1}")
-            num_rows = st.number_input(f"Number of rows for {table_name}", min_value=1, max_value=100000, value=100)
+            table_name = st.text_input(f"Table Name (Dimension {i+1})", f"Dim_Table_{i+1}", key=f"dim_table_name_{i}")
+            num_rows = st.number_input(f"Number of rows for {table_name}", min_value=1, max_value=100000, value=100, key=f"dim_num_rows_{i}")
             columns = []
-            num_columns = st.number_input(f"Number of Columns for {table_name}", min_value=1, max_value=10, value=3)
+            num_columns = st.number_input(f"Number of Columns for {table_name}", min_value=1, max_value=10, value=3, key=f"dim_columns_{i}")
             for c in range(num_columns):
-                column_name = st.text_input(f"Column {c+1} Name for {table_name}", f"Column_{c+1}")
-                column_type = st.selectbox(f"Type for {column_name}", list(data_types.keys()))
+                column_name = st.text_input(f"Column {c+1} Name for {table_name}", f"Column_{c+1}", key=f"{table_name}_col_name_{c}")
+                column_type = st.selectbox(
+                    f"Type for {column_name}", 
+                    list(data_types.keys()),
+                    key=f"{table_name}_col_{c}_{column_name}"  # Unique key
+                )
                 constant_value = None
                 if column_type == "Custom":
-                    constant_value = st.text_input(f"Constant Value for {column_name}", "")
+                    constant_value = st.text_input(f"Constant Value for {column_name}", "", key=f"{table_name}_col_custom_{c}")
                 columns.append({"name": column_name, "type": column_type, "constant": constant_value})
             dim_tables[table_name] = {"columns": columns, "num_rows": num_rows}
     
     for i in range(num_facts):
         with st.expander(f"Fact Table {i+1}"):
-            table_name = st.text_input(f"Table Name (Fact {i+1})", f"Fact_Table_{i+1}")
-            num_rows = st.number_input(f"Number of rows for {table_name}", min_value=1, max_value=100000, value=1000)
+            table_name = st.text_input(f"Table Name (Fact {i+1})", f"Fact_Table_{i+1}", key=f"fact_table_name_{i}")
+            num_rows = st.number_input(f"Number of rows for {table_name}", min_value=1, max_value=100000, value=1000, key=f"fact_num_rows_{i}")
             columns = []
-            num_columns = st.number_input(f"Number of Columns for {table_name}", min_value=1, max_value=10, value=3)
+            num_columns = st.number_input(f"Number of Columns for {table_name}", min_value=1, max_value=10, value=3, key=f"fact_columns_{i}")
             linked_dimensions = []
             for dim_name in dim_tables:
-                if st.checkbox(f"Link to {dim_name} for {table_name}", False):
+                if st.checkbox(f"Link to {dim_name} for {table_name}", False, key=f"link_to_{dim_name}_{table_name}"):
                     linked_dimensions.append(dim_name)
             for c in range(num_columns):
-                column_name = st.text_input(f"Column {c+1} Name for {table_name}", f"Column_{c+1}")
-                column_type = st.selectbox(f"Type for {column_name}", list(data_types.keys()))
+                column_name = st.text_input(f"Column {c+1} Name for {table_name}", f"Column_{c+1}", key=f"{table_name}_fact_col_name_{c}")
+                column_type = st.selectbox(
+                    f"Type for {column_name}",
+                    list(data_types.keys()),
+                    key=f"{table_name}_fact_col_{c}_{column_name}"  # Unique key
+                )
                 constant_value = None
                 if column_type == "Custom":
-                    constant_value = st.text_input(f"Constant Value for {column_name}", "")
+                    constant_value = st.text_input(f"Constant Value for {column_name}", "", key=f"{table_name}_fact_col_custom_{c}")
                 columns.append({"name": column_name, "type": column_type, "constant": constant_value})
             fact_tables[table_name] = {"columns": columns, "num_rows": num_rows, "linked_dimensions": linked_dimensions}
 
