@@ -60,7 +60,32 @@ if mode == "AI Chatbot Mode":
                 st.success("✅ Model suggestion received. You can now generate the data!")
                 st.json(tables)
             except Exception as e:
-                st.error(f"Something went wrong: {e}")
+                st.warning("⚠️ Falling back to simulated model due to API error.")
+                st.info("This is mock data to help you test the app while billing is being set up.")
+
+                dim_tables = {
+                    "Dim_Customer": {
+                        "columns": {"ID": "Integer", "Name": "Name", "City": "City", "Email": "Email"},
+                        "num_rows": 100
+                    },
+                    "Dim_Product": {
+                        "columns": {"ID": "Integer", "Product_Name": "String", "Category": "String"},
+                        "num_rows": 50
+                    }
+                }
+                fact_tables = {
+                    "Fact_Sales": {
+                        "columns": {
+                            "Fact_ID": "Integer",
+                            "Dim_Customer_ID": "Integer",
+                            "Dim_Product_ID": "Integer",
+                            "Sales_Amount": "Integer",
+                            "Order_Date": "Date"
+                        },
+                        "num_rows": 300
+                    }
+                }
+                st.json({"dim_tables": dim_tables, "fact_tables": fact_tables})
 
 if mode == "Manual Builder Mode" or (dim_tables and fact_tables):
     for i, (table_name, config) in enumerate(dim_tables.items()):
