@@ -4,3 +4,5 @@ faker
 openpyxl
 xlsxwriter
 openai
+random
+io
