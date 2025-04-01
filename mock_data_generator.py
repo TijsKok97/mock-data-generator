@@ -6,7 +6,7 @@ import openai as oa
 import os as os
 
 # Set your OpenAI API key
-openai.api_key = os.getenv("OPENAI_API_KEY")  # Make sure to set this in your environment or Streamlit secrets
+openai.api_key = st.secrets["OPENAI_API_KEY"]  # Make sure to set this in your environment or Streamlit secrets
 
 # Initialize Faker
 fake = Faker()
