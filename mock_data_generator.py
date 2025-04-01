@@ -143,6 +143,16 @@ mode = st.radio("How would you like to define the tables?", ["AI Chatbot Mode", 
 dim_tables = {}
 fact_tables = {}
 
+data_types = {
+    "String": fake.word,
+    "Integer": lambda: fake.random_int(min=1, max=1000),
+    "Boolean": lambda: fake.random_element(elements=[0, 1]),
+    "City": fake.city,
+    "Name": fake.name,
+    "Date": fake.date_this_decade,
+    "Email": fake.email
+}
+
 if mode == "AI Chatbot Mode":
     user_input = st.text_area("Describe your data model needs (e.g., 'Sales transactions with customers and products'):")
     if st.button("Generate Model Suggestion"):
@@ -153,22 +163,26 @@ else:
         with st.expander(f"Dimension Table {i+1}"):
             table_name = st.text_input(f"Name for Dimension {i+1}", value=f"Dim_{i+1}")
             num_rows = st.number_input(f"Number of rows for {table_name}", min_value=1, max_value=100000, value=100)
-            num_columns = st.number_input(f"Columns in {table_name}", min_value=2, max_value=10, value=4)
-            columns = {}
+            columns = {"ID": "Integer"}  # Primary key for dimension table
+            num_columns = st.number_input(f"Columns in {table_name} (excluding ID)", min_value=1, max_value=10, value=3)
             for j in range(num_columns):
                 col_name = st.text_input(f"Column {j+1} Name ({table_name})", value=f"Column_{j+1}")
-                columns[col_name] = fake.word()
+                col_type = st.selectbox(f"Column {j+1} Type ({table_name})", list(data_types.keys()))
+                columns[col_name] = col_type
             dim_tables[table_name] = {"columns": columns, "num_rows": num_rows}
 
     for i in range(num_facts):
         with st.expander(f"Fact Table {i+1}"):
             table_name = st.text_input(f"Name for Fact {i+1}", value=f"Fact_{i+1}")
             num_rows = st.number_input(f"Number of rows for {table_name}", min_value=1, max_value=100000, value=1000)
-            num_columns = st.number_input(f"Columns in {table_name}", min_value=2, max_value=10, value=4)
-            columns = {}
+            columns = {"Fact_ID": "Integer"}  # Primary key for fact table
+            for dim_name in dim_tables.keys():
+                columns[f"{dim_name}_ID"] = "Integer"  # Foreign keys from dimension tables
+            num_columns = st.number_input(f"Additional columns in {table_name}", min_value=1, max_value=10, value=3)
             for j in range(num_columns):
                 col_name = st.text_input(f"Column {j+1} Name ({table_name})", value=f"Column_{j+1}")
-                columns[col_name] = fake.word()
+                col_type = st.selectbox(f"Column {j+1} Type ({table_name})", list(data_types.keys()))
+                columns[col_name] = col_type
             fact_tables[table_name] = {"columns": columns, "num_rows": num_rows}
 
 if st.button("🚀 Generate Mock Data"):
