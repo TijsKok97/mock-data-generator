@@ -186,4 +186,20 @@ else:
             fact_tables[table_name] = {"columns": columns, "num_rows": num_rows}
 
 if st.button("🚀 Generate Mock Data"):
-    st.write("(Data generation and Excel export will go here)")  # Placeholder for data generation logic
+    with st.spinner("Generating data..."):
+        excel_file = "mock_data.xlsx"
+        with pd.ExcelWriter(excel_file, engine="xlsxwriter") as writer:
+            for table_name, config in dim_tables.items():
+                df = pd.DataFrame({col: [data_types[col_type]() for _ in range(config["num_rows"])] for col, col_type in config["columns"].items()})
+                df.to_excel(writer, sheet_name=table_name, index=False)
+            for table_name, config in fact_tables.items():
+                df = pd.DataFrame({col: [data_types[col_type]() for _ in range(config["num_rows"])] for col, col_type in config["columns"].items()})
+                df.to_excel(writer, sheet_name=table_name, index=False)
+        st.success("✅ Excel file created successfully!")
+        with open(excel_file, "rb") as file:
+            st.download_button(
+                label="📥 Download Excel File",
+                data=file,
+                file_name=excel_file,
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
