@@ -1,3 +1,5 @@
+'''
+v1.0
 import streamlit as st
 import pandas as pd
 from faker import Faker
@@ -116,3 +118,56 @@ if st.button("🚀 Generate Mock Data"):
                 file_name=excel_file,
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
+'''
+
+import streamlit as st
+import pandas as pd
+from faker import Faker
+import xlsxwriter as wt
+
+# Initialize Faker
+fake = Faker()
+
+# Welcome message
+st.markdown("### 📊 Welcome to Dimensional Model Generator for Power BI 🚀")
+st.write("Define your dataset structure either manually or through AI-powered suggestions!")
+
+# User input: Choose number of tables
+num_dims = st.number_input("🟦 Number of Dimension Tables:", min_value=1, max_value=10, value=3)
+num_facts = st.number_input("🟥 Number of Fact Tables:", min_value=1, max_value=5, value=1)
+
+# User chooses between AI chatbot or manual configuration
+mode = st.radio("How would you like to define the tables?", ["AI Chatbot Mode", "Manual Builder Mode"])
+
+# Dictionary to store table configurations
+dim_tables = {}
+fact_tables = {}
+
+if mode == "AI Chatbot Mode":
+    user_input = st.text_area("Describe your data model needs (e.g., 'Sales transactions with customers and products'):")
+    if st.button("Generate Model Suggestion"):
+        st.write("(AI processing to generate tables will go here)")  # Placeholder for AI logic
+
+else:
+    for i in range(num_dims):
+        with st.expander(f"Dimension Table {i+1}"):
+            table_name = st.text_input(f"Name for Dimension {i+1}", value=f"Dim_{i+1}")
+            num_columns = st.number_input(f"Columns in {table_name}", min_value=2, max_value=10, value=4)
+            columns = {}
+            for j in range(num_columns):
+                col_name = st.text_input(f"Column {j+1} Name ({table_name})", value=f"Column_{j+1}")
+                columns[col_name] = fake.word()
+            dim_tables[table_name] = columns
+
+    for i in range(num_facts):
+        with st.expander(f"Fact Table {i+1}"):
+            table_name = st.text_input(f"Name for Fact {i+1}", value=f"Fact_{i+1}")
+            num_columns = st.number_input(f"Columns in {table_name}", min_value=2, max_value=10, value=4)
+            columns = {}
+            for j in range(num_columns):
+                col_name = st.text_input(f"Column {j+1} Name ({table_name})", value=f"Column_{j+1}")
+                columns[col_name] = fake.word()
+            fact_tables[table_name] = columns
+
+if st.button("🚀 Generate Mock Data"):
+    st.write("(Data generation and Excel export will go here)")  # Placeholder for data generation logic
