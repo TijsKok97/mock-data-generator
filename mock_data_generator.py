@@ -109,10 +109,12 @@ if st.button("🚀 Generate Mock Data"):
         excel_data = {}  # dict to hold DataFrame per table
         # Generate dimension tables
         for table_name, config in dim_tables.items():
-            df = pd.DataFrame({col['name']: [get_faker_func(col['type'], col['constant'])() for _ in range(config["num_rows"])] 
-                               for col in config["columns"]})
-            if "ID" not in df.columns:
-                df["ID"] = range(1, config["num_rows"] + 1)  # Ensure sequential unique IDs
+            # Create the dataframe with the ID column as the first column
+            dim_data = {"ID": range(1, config["num_rows"] + 1)}  # Add ID column first
+            for col in config["columns"]:
+                dim_data[col['name']] = [get_faker_func(col['type'], col['constant'])() for _ in range(config["num_rows"])]
+            # Ensure ID is always the first column
+            df = pd.DataFrame(dim_data)
             excel_data[table_name] = df
 
         # Generate fact tables
