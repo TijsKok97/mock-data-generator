@@ -134,6 +134,6 @@ if st.button("🚀 Generate Mock Data"):
             label="📥 Download Excel File",
             data=buffer,
             file_name="mock_data.xlsx",
-    m        ime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-)
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+);
 
