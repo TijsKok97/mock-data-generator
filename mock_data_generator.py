@@ -3,6 +3,8 @@ import pandas as pd
 from faker import Faker
 import xlsxwriter as wt
 import openai
+import random
+import io
 
 # Set your OpenAI API key from Streamlit secrets
 openai.api_key = st.secrets["OPENAI_API_KEY"]
@@ -34,82 +36,95 @@ data_types = {
     "City": fake.city,
     "Name": fake.name,
     "Date": fake.date_this_decade,
-    "Email": fake.email
+    "Email": fake.email,
+    "Street Address": fake.street_address,
+    "Country": fake.country,
+    "Postal Code": fake.postcode,
+    "Phone Number": fake.phone_number,
+    "Company": fake.company,
+    "Currency Amount": lambda: fake.pydecimal(left_digits=5, right_digits=2, positive=True),
+    "Custom": lambda value: value
 }
 
 # Helper to convert string keys to functions
-def get_faker_func(type_str):
+def get_faker_func(type_str, constant_value=None):
+    if constant_value:
+        return lambda: constant_value
     return data_types.get(type_str, lambda: "N/A")
 
-if mode == "AI Chatbot Mode":
-    user_input = st.text_area("Describe your data model needs (e.g., 'Sales transactions with customers and products'):")
-    if st.button("Generate Model Suggestion") and user_input:
-        with st.spinner("Consulting AI to build your model..."):
-            try:
-                response = openai.chat.completions.create(
-                    model="gpt-3.5-turbo",
-                    messages=[
-                        {"role": "system", "content": "You are a data model expert. Given a user description, output a JSON dictionary with two top-level keys: 'dim_tables' and 'fact_tables'. Each should be a dictionary where keys are table names and values are dictionaries with 'columns' (a dictionary of column_name: type_string) and 'num_rows' (an integer). Types can be: String, Integer, Boolean, City, Name, Date, Email."},
-                        {"role": "user", "content": user_input}
-                    ]
-                )
-                tables = eval(response.choices[0].message.content)
-                dim_tables = tables.get("dim_tables", {})
-                fact_tables = tables.get("fact_tables", {})
-
-                st.success("✅ Model suggestion received. You can now generate the data!")
-                st.json(tables)
-            except Exception as e:
-                st.warning(f"⚠️ Error: {e}. Please check your input and try again.")
-
-if mode == "Manual Builder Mode" or (dim_tables and fact_tables):
-    for i, (table_name, config) in enumerate(dim_tables.items()):
-        with st.expander(f"Dimension Table {i+1}: {table_name}"):
-            num_rows = st.number_input(f"Number of rows for {table_name}", min_value=1, max_value=100000, value=config.get("num_rows", 100))
-            columns = config.get("columns", {"ID": "Integer"})
-            for col_name in list(columns):
-                col_type = columns[col_name]
-                columns[col_name] = st.selectbox(f"Type of '{col_name}'", list(data_types.keys()), index=list(data_types.keys()).index(col_type) if col_type in data_types else 0)
+# Manual Builder Mode
+if mode == "Manual Builder Mode":
+    # Table configuration
+    for i in range(num_dims):
+        with st.expander(f"Dimension Table {i+1}"):
+            table_name = st.text_input(f"Table Name (Dimension {i+1})", f"Dim_Table_{i+1}")
+            num_rows = st.number_input(f"Number of rows for {table_name}", min_value=1, max_value=100000, value=100)
+            columns = []
+            num_columns = st.number_input(f"Number of Columns for {table_name}", min_value=1, max_value=10, value=3)
+            for c in range(num_columns):
+                column_name = st.text_input(f"Column {c+1} Name for {table_name}", f"Column_{c+1}")
+                column_type = st.selectbox(f"Type for {column_name}", list(data_types.keys()))
+                constant_value = None
+                if column_type == "Custom":
+                    constant_value = st.text_input(f"Constant Value for {column_name}", "")
+                columns.append({"name": column_name, "type": column_type, "constant": constant_value})
             dim_tables[table_name] = {"columns": columns, "num_rows": num_rows}
+    
+    for i in range(num_facts):
+        with st.expander(f"Fact Table {i+1}"):
+            table_name = st.text_input(f"Table Name (Fact {i+1})", f"Fact_Table_{i+1}")
+            num_rows = st.number_input(f"Number of rows for {table_name}", min_value=1, max_value=100000, value=1000)
+            columns = []
+            num_columns = st.number_input(f"Number of Columns for {table_name}", min_value=1, max_value=10, value=3)
+            linked_dimensions = []
+            for dim_name in dim_tables:
+                if st.checkbox(f"Link to {dim_name} for {table_name}", False):
+                    linked_dimensions.append(dim_name)
+            for c in range(num_columns):
+                column_name = st.text_input(f"Column {c+1} Name for {table_name}", f"Column_{c+1}")
+                column_type = st.selectbox(f"Type for {column_name}", list(data_types.keys()))
+                constant_value = None
+                if column_type == "Custom":
+                    constant_value = st.text_input(f"Constant Value for {column_name}", "")
+                columns.append({"name": column_name, "type": column_type, "constant": constant_value})
+            fact_tables[table_name] = {"columns": columns, "num_rows": num_rows, "linked_dimensions": linked_dimensions}
 
-    for i, (table_name, config) in enumerate(fact_tables.items()):
-        with st.expander(f"Fact Table {i+1}: {table_name}"):
-            num_rows = st.number_input(f"Number of rows for {table_name}", min_value=1, max_value=100000, value=config.get("num_rows", 1000))
-            columns = config.get("columns", {"Fact_ID": "Integer"})
-            for col_name in list(columns):
-                col_type = columns[col_name]
-                columns[col_name] = st.selectbox(f"Type of '{col_name}'", list(data_types.keys()), index=list(data_types.keys()).index(col_type) if col_type in data_types else 0)
-            fact_tables[table_name] = {"columns": columns, "num_rows": num_rows}
-
+# Generate Mock Data
 if st.button("🚀 Generate Mock Data"):
     with st.spinner("Generating data..."):
-        excel_file = "mock_data.xlsx"
-        with pd.ExcelWriter(excel_file, engine="xlsxwriter") as writer:
-            # Generate dimension tables
-            for table_name, config in dim_tables.items():
-                df = pd.DataFrame({col: [get_faker_func(col_type)() for _ in range(config["num_rows"])] for col, col_type in config["columns"].items()})
-                if "ID" in df.columns:
-                    df["ID"] = range(1, config["num_rows"] + 1)  # Ensure sequential unique IDs
+        excel_data = {}  # dict to hold DataFrame per table
+        # Generate dimension tables
+        for table_name, config in dim_tables.items():
+            df = pd.DataFrame({col['name']: [get_faker_func(col['type'], col['constant'])() for _ in range(config["num_rows"])] 
+                               for col in config["columns"]})
+            if "ID" not in df.columns:
+                df["ID"] = range(1, config["num_rows"] + 1)  # Ensure sequential unique IDs
+            excel_data[table_name] = df
+
+        # Generate fact tables
+        for table_name, config in fact_tables.items():
+            fact_df = pd.DataFrame()
+            fact_df["Fact_ID"] = range(1, config["num_rows"] + 1)  # Unique Fact ID
+            for dim_name in config["linked_dimensions"]:
+                if f"{dim_name}_ID" in dim_tables[dim_name]["columns"]:
+                    fact_df[f"{dim_name}_ID"] = excel_data[dim_name]["ID"].sample(n=config["num_rows"], replace=True).values
+            for col in config["columns"]:
+                if col["name"] != "Fact_ID":
+                    fact_df[col["name"]] = [get_faker_func(col["type"], col["constant"])() for _ in range(config["num_rows"])]
+            excel_data[table_name] = fact_df
+        
+        # Create the Excel file in memory
+        buffer = io.BytesIO()
+        with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+            for table_name, df in excel_data.items():
                 df.to_excel(writer, sheet_name=table_name, index=False)
-                dim_data[table_name] = df  # Store for reference
-
-            # Generate fact tables
-            for table_name, config in fact_tables.items():
-                fact_df = pd.DataFrame()
-                fact_df["Fact_ID"] = range(1, config["num_rows"] + 1)
-                for dim_name in dim_tables.keys():
-                    if f"{dim_name}_ID" in config["columns"]:
-                        fact_df[f"{dim_name}_ID"] = dim_data[dim_name]["ID"].sample(n=config["num_rows"], replace=True).values
-                for col, col_type in config["columns"].items():
-                    if col not in fact_df.columns:
-                        fact_df[col] = [get_faker_func(col_type)() for _ in range(config["num_rows"])]
-                fact_df.to_excel(writer, sheet_name=table_name, index=False)
-
+            writer.save()
+        
         st.success("✅ Excel file created successfully!")
-        with open(excel_file, "rb") as file:
-            st.download_button(
-                label="📥 Download Excel File",
-                data=file,
-                file_name=excel_file,
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
+        buffer.seek(0)
+        st.download_button(
+            label="📥 Download Excel File",
+            data=buffer,
+            file_name="mock_data.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
