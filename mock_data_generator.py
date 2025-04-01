@@ -152,22 +152,24 @@ else:
     for i in range(num_dims):
         with st.expander(f"Dimension Table {i+1}"):
             table_name = st.text_input(f"Name for Dimension {i+1}", value=f"Dim_{i+1}")
+            num_rows = st.number_input(f"Number of rows for {table_name}", min_value=1, max_value=100000, value=100)
             num_columns = st.number_input(f"Columns in {table_name}", min_value=2, max_value=10, value=4)
             columns = {}
             for j in range(num_columns):
                 col_name = st.text_input(f"Column {j+1} Name ({table_name})", value=f"Column_{j+1}")
                 columns[col_name] = fake.word()
-            dim_tables[table_name] = columns
+            dim_tables[table_name] = {"columns": columns, "num_rows": num_rows}
 
     for i in range(num_facts):
         with st.expander(f"Fact Table {i+1}"):
             table_name = st.text_input(f"Name for Fact {i+1}", value=f"Fact_{i+1}")
+            num_rows = st.number_input(f"Number of rows for {table_name}", min_value=1, max_value=100000, value=1000)
             num_columns = st.number_input(f"Columns in {table_name}", min_value=2, max_value=10, value=4)
             columns = {}
             for j in range(num_columns):
                 col_name = st.text_input(f"Column {j+1} Name ({table_name})", value=f"Column_{j+1}")
                 columns[col_name] = fake.word()
-            fact_tables[table_name] = columns
+            fact_tables[table_name] = {"columns": columns, "num_rows": num_rows}
 
 if st.button("🚀 Generate Mock Data"):
     st.write("(Data generation and Excel export will go here)")  # Placeholder for data generation logic
