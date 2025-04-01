@@ -9,12 +9,18 @@ import io
 # Set your OpenAI API key from Streamlit secrets
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
-# Initialize Faker
-fake = Faker()
-
 # Welcome message
 st.markdown("### 📊 Welcome to Dimensional Model Generator for Power BI 🚀")
 st.write("Define your dataset structure either manually or through AI-powered suggestions!")
+
+# Language selection for Faker
+language = st.selectbox("Choose language for data generation:", ["English", "Dutch"])
+
+# Initialize Faker based on selected language
+if language == "Dutch":
+    fake = Faker("nl_NL")  # Initialize Faker for Dutch language
+else:
+    fake = Faker("en_US")  # Initialize Faker for English language
 
 # User input: Choose number of tables
 num_dims = st.number_input("🟦 Number of Dimension Tables:", min_value=1, max_value=10, value=3)
