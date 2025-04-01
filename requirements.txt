@@ -3,3 +3,5 @@ pandas
 faker
 openpyxl
 xlsxwriter
+openai
+os
