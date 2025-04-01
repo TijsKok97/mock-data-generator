@@ -7,7 +7,7 @@ import xlsxwriter as wt
 fake = Faker()
 
 # Welcome message
-st.markdown("### 📊 Welcome to MockedUp! 🚀")
+st.markdown("### 📊 Welcome to Dimensional Model Generator for Power BI 🚀")
 st.write("Define your dataset structure either manually or through AI-powered suggestions!")
 
 # User input: Choose number of tables
@@ -36,8 +36,17 @@ if mode == "AI Chatbot Mode":
     user_input = st.text_area("Describe your data model needs (e.g., 'Sales transactions with customers and products'):")
     if st.button("Generate Model Suggestion"):
         st.write("(AI processing to generate tables will go here)")  # Placeholder for AI logic
+        
+        # Simulated AI-generated table structures
+        dim_tables = {
+            "Dim_Customer": {"columns": {"ID": "Integer", "Name": "String", "City": "City"}, "num_rows": 100},
+            "Dim_Product": {"columns": {"ID": "Integer", "Product_Name": "String", "Category": "String"}, "num_rows": 50}
+        }
+        fact_tables = {
+            "Fact_Sales": {"columns": {"Fact_ID": "Integer", "Dim_Customer_ID": "Integer", "Dim_Product_ID": "Integer", "Sales_Amount": "Integer"}, "num_rows": 500}
+        }
 
-else:
+if mode == "Manual Builder Mode":
     for i in range(num_dims):
         with st.expander(f"Dimension Table {i+1}"):
             table_name = st.text_input(f"Name for Dimension {i+1}", value=f"Dim_{i+1}")
