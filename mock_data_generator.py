@@ -10,7 +10,7 @@ import io
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 # Welcome message
-st.markdown("### 📊 Welcome to MockedUp! 🚀")
+st.markdown("### 📊 Welcome to Dimensional Model Generator for Power BI 🚀")
 st.write("Define your dataset structure either manually or through AI-powered suggestions!")
 
 # Language selection for Faker
@@ -88,7 +88,7 @@ if mode == "Manual Builder Mode":
             num_columns = st.number_input(f"Number of Columns for {table_name}", min_value=1, max_value=10, value=3, key=f"fact_columns_{i}")
             linked_dimensions = []
             for dim_name in dim_tables:
-                if st.checkbox(f"Link this fact table to '{dim_name}' with a key", False, key=f"link_to_{dim_name}_{table_name}"):
+                if st.checkbox(f"Link to {dim_name} for {table_name}", False, key=f"link_to_{dim_name}_{table_name}"):
                     linked_dimensions.append(dim_name)
             for c in range(num_columns):
                 column_name = st.text_input(f"Column {c+1} Name for {table_name}", f"Column_{c+1}", key=f"{table_name}_fact_col_name_{c}")
@@ -147,3 +147,36 @@ if st.button("🚀 Generate Mock Data"):
             file_name="mock_data.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
+
+# **AI Chatbot Mode**
+if mode == "AI Chatbot Mode":
+    st.title("ChatGPT-like Clone")
+    client = openai.ChatCompletion
+    
+    if "openai_model" not in st.session_state:
+        st.session_state["openai_model"] = "gpt-3.5-turbo"
+
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+
+    # Display previous messages
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    if prompt := st.chat_input("What is up?"):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
+
+        with st.chat_message("assistant"):
+            stream = client.create(
+                model=st.session_state["openai_model"],
+                messages=[{"role": m["role"], "content": m["content"]} for m in st.session_state.messages],
+                stream=True,
+            )
+            response = ""
+            for chunk in stream:
+                response += chunk["choices"][0]["message"]["content"]
+                st.write(response)  # Stream the response to the user
+            st.session_state.messages.append({"role": "assistant", "content": response})
