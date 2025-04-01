@@ -7,7 +7,7 @@ import random
 import io
 
 # Set your OpenAI API key from Streamlit secrets
-openai.api_key = st.secrets["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"]
+openai.api_key = st.secrets["openai"]["api_key"]
 
 # Welcome message
 st.markdown("### 📊 Welcome to Dimensional Model Generator for Power BI 🚀")
