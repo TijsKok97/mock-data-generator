@@ -142,6 +142,7 @@ mode = st.radio("How would you like to define the tables?", ["AI Chatbot Mode", 
 # Dictionary to store table configurations
 dim_tables = {}
 fact_tables = {}
+dim_data = {}  # Store generated dimension table data
 
 data_types = {
     "String": fake.word,
@@ -191,10 +192,20 @@ if st.button("🚀 Generate Mock Data"):
         with pd.ExcelWriter(excel_file, engine="xlsxwriter") as writer:
             for table_name, config in dim_tables.items():
                 df = pd.DataFrame({col: [data_types[col_type]() for _ in range(config["num_rows"])] for col, col_type in config["columns"].items()})
+                df["ID"] = range(1, config["num_rows"] + 1)  # Ensure sequential unique IDs
                 df.to_excel(writer, sheet_name=table_name, index=False)
+                dim_data[table_name] = df  # Store for reference
+
             for table_name, config in fact_tables.items():
-                df = pd.DataFrame({col: [data_types[col_type]() for _ in range(config["num_rows"])] for col, col_type in config["columns"].items()})
-                df.to_excel(writer, sheet_name=table_name, index=False)
+                fact_df = pd.DataFrame()
+                fact_df["Fact_ID"] = range(1, config["num_rows"] + 1)
+                for dim_name in dim_tables.keys():
+                    fact_df[f"{dim_name}_ID"] = dim_data[dim_name]["ID"].sample(n=config["num_rows"], replace=True).values
+                for col, col_type in config["columns"].items():
+                    if col not in ["Fact_ID"] + [f"{dim}_ID" for dim in dim_tables.keys()]:
+                        fact_df[col] = [data_types[col_type]() for _ in range(config["num_rows"])]
+                fact_df.to_excel(writer, sheet_name=table_name, index=False)
+
         st.success("✅ Excel file created successfully!")
         with open(excel_file, "rb") as file:
             st.download_button(
