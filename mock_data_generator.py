@@ -6,7 +6,7 @@ import random
 import io
 
 # Set your OpenAI API key from Streamlit secrets
-openai.api_key = st.secrets["api_key"]
+openai.api_key = st.secrets["openai_api"]
 st.write(st.secrets)
 
 # Welcome message
