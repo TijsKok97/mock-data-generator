@@ -7,7 +7,7 @@ import io
 
 # Set your OpenAI API key from Streamlit secrets
 client = OpenAI(
-    api_key=st.secrets["openai_apikey"]
+    api_key=st.secrets["openai_api"]
 )
 st.write(st.secrets)
 
