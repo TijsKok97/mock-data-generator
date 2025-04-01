@@ -118,7 +118,7 @@ if st.button("🚀 Generate Mock Data"):
                 file_name=excel_file,
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
-
+'''
 
 import streamlit as st
 import pandas as pd
