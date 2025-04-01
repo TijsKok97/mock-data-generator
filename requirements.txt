@@ -4,4 +4,3 @@ faker
 openpyxl
 xlsxwriter
 openai
-io
