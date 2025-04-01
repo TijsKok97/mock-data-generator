@@ -113,11 +113,14 @@ if st.button("🚀 Generate Mock Data"):
         for table_name, config in fact_tables.items():
             fact_df = pd.DataFrame()
             fact_df["Fact_ID"] = range(1, config["num_rows"] + 1)  # Unique Fact ID
+            # Automatically add foreign key columns for each linked dimension
             for dim_name in config["linked_dimensions"]:
-                if f"{dim_name}_ID" in dim_tables[dim_name]["columns"]:
-                    fact_df[f"{dim_name}_ID"] = excel_data[dim_name]["ID"].sample(n=config["num_rows"], replace=True).values
+                dim_table = dim_tables[dim_name]
+                dim_id_column = f"{dim_name}_ID"
+                # Ensure the fact table has a valid foreign key referencing the dimension table
+                fact_df[dim_id_column] = excel_data[dim_name]["ID"].sample(n=config["num_rows"], replace=True).values
             for col in config["columns"]:
-                if col["name"] != "Fact_ID":
+                if col["name"] != "Fact_ID" and not col["name"].endswith("_ID"):
                     fact_df[col["name"]] = [get_faker_func(col["type"], col["constant"])() for _ in range(config["num_rows"])]
             excel_data[table_name] = fact_df
         
