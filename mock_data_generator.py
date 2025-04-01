@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 from faker import Faker
-import xlsxwriter as wt
 import openai
 import random
 import io
@@ -169,13 +168,12 @@ if mode == "AI Chatbot Mode":
             st.markdown(prompt)
 
         with st.chat_message("assistant"):
-            stream = openai.ChatCompletion.create(
+            # Using new OpenAI API interface (v1.0.0+)
+            response = openai.Completion.create(
                 model=st.session_state["openai_model"],
-                messages=[{"role": m["role"], "content": m["content"]} for m in st.session_state.messages],
-                stream=True,
+                prompt=prompt,
+                max_tokens=100
             )
-            response = ""
-            for chunk in stream:
-                response += chunk["choices"][0]["message"]["content"]
-                st.write(response)  # Stream the response to the user
-            st.session_state.messages.append({"role": "assistant", "content": response})
+
+            st.write(response.choices[0].text.strip())  # Display the response
+            st.session_state.messages.append({"role": "assistant", "content": response.choices[0].text.strip()})
