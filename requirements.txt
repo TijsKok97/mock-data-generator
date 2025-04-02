@@ -3,4 +3,4 @@ pandas
 faker
 openpyxl
 xlsxwriter
-openai==0.28
+genai
