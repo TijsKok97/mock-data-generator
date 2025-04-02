@@ -6,7 +6,7 @@ import io
 
 # Welcome message
 st.markdown("### 📊 Welcome to MockedUp 🚀")
-st.write("Define your dataset structure here! You can use the help of the chatbot at the right for inspiration.")
+st.write("Define your dataset structure either manually or through AI-powered suggestions!")
 
 # Define the data types available from Faker
 data_types = {
@@ -137,11 +137,16 @@ with col2:
             st.markdown(prompt)
 
         # Use the current context to generate a response
-        full_prompt = f"You are working with {num_dims} dimension tables and {num_facts} fact tables. {prompt}"
+        # This includes a helpful message based on the schema context
+        full_prompt = f"""
+        You are helping a user design a star schema with {num_dims} dimension tables and {num_facts} fact tables.
+        The user is asking for advice or inspiration for structuring their database.
+        {prompt}
+        """
 
         with st.chat_message("assistant"):
-            # Example response, you can replace with an AI API call
-            assistant_reply = f"Here is some help with your star schema: {prompt}"
+            # Replace with an actual AI API call or a predefined helper response
+            assistant_reply = f"Here's an idea: For dimension tables, consider defining unique attributes for each entity, such as products or customers. Fact tables should focus on capturing metrics or events linked to dimensions. Feel free to ask for more specific advice!"
             st.write(assistant_reply)
             st.session_state.messages.append({"role": "assistant", "content": assistant_reply})
 
