@@ -111,8 +111,6 @@ if mode == "AI Chatbot Mode":
 
                 # Optionally, you can update fact tables similarly (if included in the response)
 
-            # If schema is updated, the "Generate Mock Data" button will appear
-
 # Function to generate mock data based on schema
 def generate_mock_data():
     excel_data = {}  # dict to hold DataFrame per table
