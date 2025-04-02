@@ -26,6 +26,37 @@ data_types = {
     "Custom": "Custom"
 }
 
+# Function to get the corresponding Faker function based on the data type
+def get_faker_func(data_type):
+    if data_type == "String":
+        return fake.word
+    elif data_type == "Integer":
+        return lambda: fake.random_int(min=1, max=1000)
+    elif data_type == "Boolean":
+        return lambda: fake.random_element(elements=[True, False])
+    elif data_type == "City":
+        return fake.city
+    elif data_type == "Name":
+        return fake.name
+    elif data_type == "Date":
+        return fake.date_this_decade
+    elif data_type == "Email":
+        return fake.email
+    elif data_type == "Street Address":
+        return fake.street_address
+    elif data_type == "Country":
+        return fake.country
+    elif data_type == "Postal Code":
+        return fake.postcode
+    elif data_type == "Phone Number":
+        return fake.phone_number
+    elif data_type == "Company":
+        return fake.company
+    elif data_type == "Currency Amount":
+        return lambda: fake.pydecimal(left_digits=5, right_digits=2, positive=True)
+    else:
+        return lambda: "Custom Data"  # Default case for custom data type
+
 # Manual configuration inputs
 st.subheader("🛠️ Manual Configuration")
 language = st.selectbox("Choose language for data generation:", ["English", "Dutch"], key="manual_language")
@@ -40,7 +71,7 @@ dim_tables = {}
 fact_tables = {}
 
 # Define the layout for left (input fields) and right (AI Chatbot) sections
-col1, col2 = st.columns([3, 1])  # Left column will be larger, right column smaller for chatbot
+col1, col2 = st.columns([2, 2])  # Increased the size of the chatbot by making both columns equal
 
 with col1:
     # Dimension and Fact Table Configuration
