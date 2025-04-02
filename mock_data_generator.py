@@ -94,22 +94,24 @@ if mode == "AI Chatbot Mode":
             st.write(assistant_reply)  # Display the response
             st.session_state.messages.append({"role": "assistant", "content": assistant_reply})
 
-            # Logic to capture and store the table configuration from the assistant's response
-            # Parse the response to update dim_tables and fact_tables dynamically
-
+            # Example logic for extracting the table information from assistant's response
             if "dimension table" in assistant_reply.lower():
-                table_name = "Dim_Product"  # Example extraction from the response
+                # Example: Hardcoded dimensions for now (you can later parse the response more dynamically)
+                table_name = "Dim_Product"
                 columns = ["Product_ID (Integer)", "Product_Name (String)", "Category (String)"]
 
-                # Store the dimension table configuration in `dim_tables`
+                # Update dim_tables
                 dim_tables[table_name] = {
                     "columns": [{"name": col.split(" ")[0], "type": col.split(" ")[1]} for col in columns],
                     "num_rows": 100  # Default number of rows
                 }
-                st.session_state.schema_updated = True  # Mark schema as updated
 
-                # Dynamically create a button to generate mock data
-                st.session_state.generate_data_button = True  # Flag to show the data generation button
+                # Mark schema as updated
+                st.session_state.schema_updated = True  # This is crucial for showing the data generation button
+
+                # Optionally, you can update fact tables similarly (if included in the response)
+
+            # If schema is updated, the "Generate Mock Data" button will appear
 
 # Function to generate mock data based on schema
 def generate_mock_data():
