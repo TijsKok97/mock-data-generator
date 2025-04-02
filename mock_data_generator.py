@@ -104,34 +104,40 @@ if mode == "AI Chatbot Mode":
                 }
 
 # Generate Mock Data (based on user conversation)
+def generate_mock_data():
+    excel_data = {}  # dict to hold DataFrame per table
+    # Generate dimension tables
+    for table_name, config in dim_tables.items():
+        # Create the dataframe with the ID column as the first column
+        dim_data = {"ID": range(1, config["num_rows"] + 1)}  # Add ID column first
+        for col in config["columns"]:
+            dim_data[col['name']] = [get_faker_func(col['type'])() for _ in range(config["num_rows"])]
+        # Ensure ID is always the first column
+        df = pd.DataFrame(dim_data)
+        excel_data[table_name] = df
+
+    # Generate fact tables
+    for table_name, config in fact_tables.items():
+        fact_df = pd.DataFrame()
+        fact_df["Fact_ID"] = range(1, config["num_rows"] + 1)  # Unique Fact ID
+        # Automatically add foreign key columns for each linked dimension
+        for dim_name in config["linked_dimensions"]:
+            dim_table = dim_tables[dim_name]
+            dim_id_column = f"{dim_name}_ID"
+            # Ensure the fact table has a valid foreign key referencing the dimension table
+            fact_df[dim_id_column] = excel_data[dim_name]["ID"].sample(n=config["num_rows"], replace=True).values
+        for col in config["columns"]:
+            if col["name"] != "Fact_ID" and not col["name"].endswith("_ID"):
+                fact_df[col["name"]] = [get_faker_func(col["type"])() for _ in range(config["num_rows"])]
+        excel_data[table_name] = fact_df
+
+    return excel_data
+
+# Generate Excel for Download
 if st.button("🚀 Generate Mock Data"):
     with st.spinner("Generating data..."):
-        excel_data = {}  # dict to hold DataFrame per table
-        # Generate dimension tables
-        for table_name, config in dim_tables.items():
-            # Create the dataframe with the ID column as the first column
-            dim_data = {"ID": range(1, config["num_rows"] + 1)}  # Add ID column first
-            for col in config["columns"]:
-                dim_data[col['name']] = [get_faker_func(col['type'])() for _ in range(config["num_rows"])]
-            # Ensure ID is always the first column
-            df = pd.DataFrame(dim_data)
-            excel_data[table_name] = df
+        excel_data = generate_mock_data()  # Generate the mock data based on the schema
 
-        # Generate fact tables
-        for table_name, config in fact_tables.items():
-            fact_df = pd.DataFrame()
-            fact_df["Fact_ID"] = range(1, config["num_rows"] + 1)  # Unique Fact ID
-            # Automatically add foreign key columns for each linked dimension
-            for dim_name in config["linked_dimensions"]:
-                dim_table = dim_tables[dim_name]
-                dim_id_column = f"{dim_name}_ID"
-                # Ensure the fact table has a valid foreign key referencing the dimension table
-                fact_df[dim_id_column] = excel_data[dim_name]["ID"].sample(n=config["num_rows"], replace=True).values
-            for col in config["columns"]:
-                if col["name"] != "Fact_ID" and not col["name"].endswith("_ID"):
-                    fact_df[col["name"]] = [get_faker_func(col["type"])() for _ in range(config["num_rows"])]
-            excel_data[table_name] = fact_df
-        
         # Create the Excel file in memory
         buffer = io.BytesIO()
         with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
