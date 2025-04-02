@@ -5,12 +5,29 @@ import google.genai as genai  # Import the google-genai library
 import random
 import io
 
-# Initialize the Faker library
+# Welcome message
+st.markdown("### 📊 Welcome to MockedUp 🚀")
+st.write("Define your dataset structure either manually or through AI-powered suggestions!")
+
+# Language selection for Faker
 language = st.selectbox("Choose language for data generation:", ["English", "Dutch"])
+
+# Initialize Faker based on selected language
 if language == "Dutch":
     fake = Faker("nl_NL")  # Initialize Faker for Dutch language
 else:
     fake = Faker("en_US")  # Initialize Faker for English language
+
+# User input: Choose number of tables
+num_dims = st.number_input("🟦 Number of Dimension Tables:", min_value=1, max_value=10, value=3)
+num_facts = st.number_input("🟥 Number of Fact Tables:", min_value=1, max_value=5, value=1)
+
+# User chooses between AI chatbot or manual configuration
+mode = st.radio("How would you like to define the tables?", ["AI Chatbot Mode", "Manual Builder Mode"])
+
+# Dictionary to store table configurations
+dim_tables = {}
+fact_tables = {}
 
 # Available data types
 data_types = {
@@ -36,10 +53,6 @@ def get_faker_func(type_str, constant_value=None):
         return lambda: constant_value
     return data_types.get(type_str, lambda: "N/A")
 
-# Store dimension and fact table configurations
-dim_tables = {}
-fact_tables = {}
-
 # Predefined context for the assistant
 context = """
 You are an AI assistant specialized in helping users design star schema data models for database architectures. Users will ask for help with creating dimension tables, fact tables, and generating relationships between them. Please guide them in defining table names, choosing column data types, and linking dimension tables to fact tables.
@@ -51,9 +64,6 @@ if "messages" not in st.session_state:
 
 if "schema_updated" not in st.session_state:
     st.session_state.schema_updated = False
-
-# User input to define whether the user wants Chatbot Mode or Manual Mode
-mode = st.radio("How would you like to define the tables?", ["AI Chatbot Mode", "Manual Builder Mode"])
 
 if mode == "AI Chatbot Mode":
     st.title("The Mockbot")
@@ -83,12 +93,14 @@ if mode == "AI Chatbot Mode":
             st.write(assistant_reply)  # Display the response
             st.session_state.messages.append({"role": "assistant", "content": assistant_reply})
 
-            # Process feedback into table definitions (example)
+            # Logic to capture and store the table configuration from the assistant's response
+            # Example: If the assistant responds with "Dimension Table: Dim_Product", we store that info
             if "dimension table" in assistant_reply.lower():
-                table_name = "Dim_Product"  # Example table name from response
+                # Extract table names, column names, and types from the AI's response (you can use regex or basic string parsing)
+                table_name = "Dim_Product"  # Example extraction from the response
                 columns = ["Product_ID (Integer)", "Product_Name (String)", "Category (String)"]
 
-                # Store the table definition in dim_tables
+                # Store the dimension table configuration in `dim_tables`
                 dim_tables[table_name] = {
                     "columns": [{"name": col.split(" ")[0], "type": col.split(" ")[1]} for col in columns],
                     "num_rows": 100  # Default number of rows
