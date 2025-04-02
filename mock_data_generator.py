@@ -163,3 +163,4 @@ if "generate_data_button" in st.session_state and st.session_state.generate_data
                     data=buffer,
                     file_name="mock_data.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
