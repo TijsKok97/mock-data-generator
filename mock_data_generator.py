@@ -171,4 +171,4 @@ if mode == "AI Chatbot Mode":
                 model="gemini-2.0-flash", contents=prompt
             )
             st.write(response.text.strip())  # Display the response
-            st.session_state.messages.append({"role": "assistant", "content": response.text.strip()})
+            st.session_state.messages.append({"role": "assistant", "content": response.text.strip()});
