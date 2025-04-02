@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from faker import Faker
-import google.genai as genai # Import the google-genai library
+import google.genai as genai  # Import the google-genai library
 import random
 import io
 
@@ -170,8 +170,8 @@ if mode == "AI Chatbot Mode":
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        # Append context to every user query
-        full_prompt = context + "\n" + prompt
+        # Include number of dimensions and facts in context
+        full_prompt = f"{context}\nYou are working with {num_dims} dimension tables and {num_facts} fact tables.\n" + prompt
 
         with st.chat_message("assistant"):
             # Using Google's Gemini API with context for specialization
@@ -181,4 +181,4 @@ if mode == "AI Chatbot Mode":
             )
 
             st.write(response.text.strip())  # Display the response
-            st.session_state.messages.append({"role": "assistant", "content": response.text.strip()});
+            st.session_state.messages.append({"role": "assistant", "content": response.text.strip()})
