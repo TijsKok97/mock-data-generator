@@ -5,29 +5,12 @@ import google.genai as genai  # Import the google-genai library
 import random
 import io
 
-# Welcome message
-st.markdown("### 📊 Welcome to MockedUp 🚀")
-st.write("Define your dataset structure either manually or through AI-powered suggestions!")
-
-# Language selection for Faker
+# Initialize the Faker library
 language = st.selectbox("Choose language for data generation:", ["English", "Dutch"])
-
-# Initialize Faker based on selected language
 if language == "Dutch":
     fake = Faker("nl_NL")  # Initialize Faker for Dutch language
 else:
     fake = Faker("en_US")  # Initialize Faker for English language
-
-# User input: Choose number of tables
-num_dims = st.number_input("🟦 Number of Dimension Tables:", min_value=1, max_value=10, value=3)
-num_facts = st.number_input("🟥 Number of Fact Tables:", min_value=1, max_value=5, value=1)
-
-# User chooses between AI chatbot or manual configuration
-mode = st.radio("How would you like to define the tables?", ["AI Chatbot Mode", "Manual Builder Mode"])
-
-# Dictionary to store table configurations
-dim_tables = {}
-fact_tables = {}
 
 # Available data types
 data_types = {
@@ -53,6 +36,10 @@ def get_faker_func(type_str, constant_value=None):
         return lambda: constant_value
     return data_types.get(type_str, lambda: "N/A")
 
+# Store dimension and fact table configurations
+dim_tables = {}
+fact_tables = {}
+
 # Predefined context for the assistant
 context = """
 You are an AI assistant specialized in helping users design star schema data models for database architectures. Users will ask for help with creating dimension tables, fact tables, and generating relationships between them. Please guide them in defining table names, choosing column data types, and linking dimension tables to fact tables.
@@ -61,6 +48,9 @@ You are an AI assistant specialized in helping users design star schema data mod
 # **Google Gemini Chatbot Mode**
 if "messages" not in st.session_state:
     st.session_state.messages = []
+
+if "schema_updated" not in st.session_state:
+    st.session_state.schema_updated = False
 
 if mode == "AI Chatbot Mode":
     st.title("The Mockbot")
@@ -90,20 +80,19 @@ if mode == "AI Chatbot Mode":
             st.write(assistant_reply)  # Display the response
             st.session_state.messages.append({"role": "assistant", "content": assistant_reply})
 
-            # Logic to capture and store the table configuration from the assistant's response
-            # Example: If the assistant responds with "Dimension Table: Dim_Product", we store that info
+            # Process feedback into table definitions (example)
             if "dimension table" in assistant_reply.lower():
-                # Extract table names, column names, and types from the AI's response (you can use regex or basic string parsing)
-                table_name = "Dim_Product"  # Example extraction from the response
+                table_name = "Dim_Product"  # Example table name from response
                 columns = ["Product_ID (Integer)", "Product_Name (String)", "Category (String)"]
 
-                # Store the dimension table configuration in `dim_tables`
+                # Store the table definition in dim_tables
                 dim_tables[table_name] = {
                     "columns": [{"name": col.split(" ")[0], "type": col.split(" ")[1]} for col in columns],
                     "num_rows": 100  # Default number of rows
                 }
+                st.session_state.schema_updated = True  # Mark schema as updated
 
-# Generate Mock Data (based on user conversation)
+# Function to generate mock data based on schema
 def generate_mock_data():
     excel_data = {}  # dict to hold DataFrame per table
     # Generate dimension tables
@@ -116,7 +105,7 @@ def generate_mock_data():
         df = pd.DataFrame(dim_data)
         excel_data[table_name] = df
 
-    # Generate fact tables
+    # Generate fact tables (if any)
     for table_name, config in fact_tables.items():
         fact_df = pd.DataFrame()
         fact_df["Fact_ID"] = range(1, config["num_rows"] + 1)  # Unique Fact ID
@@ -124,7 +113,6 @@ def generate_mock_data():
         for dim_name in config["linked_dimensions"]:
             dim_table = dim_tables[dim_name]
             dim_id_column = f"{dim_name}_ID"
-            # Ensure the fact table has a valid foreign key referencing the dimension table
             fact_df[dim_id_column] = excel_data[dim_name]["ID"].sample(n=config["num_rows"], replace=True).values
         for col in config["columns"]:
             if col["name"] != "Fact_ID" and not col["name"].endswith("_ID"):
@@ -134,7 +122,7 @@ def generate_mock_data():
     return excel_data
 
 # Generate Excel for Download
-if st.button("🚀 Generate Mock Data"):
+if st.button("🚀 Generate Mock Data") and st.session_state.schema_updated:
     with st.spinner("Generating data..."):
         excel_data = generate_mock_data()  # Generate the mock data based on the schema
 
