@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from faker import Faker
-import openai
+import genai  # Google's Gemini API library
 import random
 import io
 
@@ -144,15 +144,12 @@ if st.button("🚀 Generate Mock Data"):
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
 
-# Set your OpenAI API key from Streamlit secrets
-openai.api_key = st.secrets["api"]
+# Set your Google Gemini API key
+api_key = st.secrets["google_api_key"]
 
-# **AI Chatbot Mode**
+# **Google Gemini Chatbot Mode**
 if mode == "AI Chatbot Mode":
-    st.title("ChatGPT-like Clone")
-    
-    if "openai_model" not in st.session_state:
-        st.session_state["openai_model"] = "gpt-3.5-turbo"
+    st.title("Gemini AI Chatbot")
 
     if "messages" not in st.session_state:
         st.session_state.messages = []
@@ -168,12 +165,10 @@ if mode == "AI Chatbot Mode":
             st.markdown(prompt)
 
         with st.chat_message("assistant"):
-            # Using new OpenAI API interface (v1.0.0+)
-            response = openai.Completion.create(
-                model=st.session_state["openai_model"],
-                prompt=prompt,
-                max_tokens=100
+            # Using Google's Gemini API
+            client = genai.Client(api_key=api_key)
+            response = client.models.generate_content(
+                model="gemini-2.0-flash", contents=prompt
             )
-
-            st.write(response.choices[0].text.strip())  # Display the response
-            st.session_state.messages.append({"role": "assistant", "content": response.choices[0].text.strip()})
+            st.write(response.text.strip())  # Display the response
+            st.session_state.messages.append({"role": "assistant", "content": response.text.strip()})
