@@ -18,10 +18,6 @@ if language == "Dutch":
 else:
     fake = Faker("en_US")  # Initialize Faker for English language
 
-# User input: Choose number of tables with unique keys
-num_dims = st.number_input("🟦 Number of Dimension Tables:", min_value=1, max_value=10, value=3, key="num_dims")
-num_facts = st.number_input("🟥 Number of Fact Tables:", min_value=1, max_value=5, value=1, key="num_facts")
-
 # Dictionary to store table configurations
 dim_tables = {}
 fact_tables = {}
@@ -66,7 +62,7 @@ if "schema_updated" not in st.session_state:
 col1, col2 = st.columns([1, 2])  # Left column will be smaller, right column will be larger
 
 with col1:
-    # Input for manual configuration
+    # Input for manual configuration (kept only in the "Manual Configuration" section)
     st.subheader("🛠️ Manual Configuration")
     num_dims = st.number_input("🟦 Number of Dimension Tables:", min_value=1, max_value=10, value=3, key="manual_num_dims")
     num_facts = st.number_input("🟥 Number of Fact Tables:", min_value=1, max_value=5, value=1, key="manual_num_facts")
