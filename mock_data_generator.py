@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from faker import Faker
-import google.genai as genai  # Import the google-genai library
+import google.genai as genai
 import random
 import io
 
@@ -14,9 +14,9 @@ language = st.selectbox("Choose language for data generation:", ["English", "Dut
 
 # Initialize Faker based on selected language
 if language == "Dutch":
-    fake = Faker("nl_NL")  # Initialize Faker for Dutch language
+    fake = Faker("nl_NL")
 else:
-    fake = Faker("en_US")  # Initialize Faker for English language
+    fake = Faker("en_US")
 
 # User input: Choose number of tables
 num_dims = st.number_input("🟦 Number of Dimension Tables:", min_value=1, max_value=10, value=3)
@@ -56,6 +56,7 @@ def get_faker_func(type_str, constant_value=None):
 # Predefined context for the assistant
 context = """
 You are an AI assistant specialized in helping users design star schema data models for database architectures. Users will ask for help with creating dimension tables, fact tables, and generating relationships between them. Please guide them in defining table names, choosing column data types, and linking dimension tables to fact tables.
+Do not generate any python code. Only return the requested information.
 """
 
 # **Google Gemini Chatbot Mode**
@@ -97,37 +98,41 @@ if mode == "AI Chatbot Mode":
             # Example: If the assistant responds with "Dimension Table: Dim_Product", we store that info
             if "dimension table" in assistant_reply.lower():
                 # Extract table names, column names, and types from the AI's response (you can use regex or basic string parsing)
-                table_name = "Dim_Product"  # Example extraction from the response
-                columns = ["Product_ID (Integer)", "Product_Name (String)", "Category (String)"]
+                # This is a placeholder, you'll need to implement your own parsing logic based on the AI's output
+                # Example:
+                # table_name = "Dim_Product"
+                # columns = ["Product_ID (Integer)", "Product_Name (String)", "Category (String)"]
+                #
+                # In a real scenario, you'd parse the AI's reply to extract the table and column details.
+                # For this example, I'll use a hardcoded value.
+                try:
+                    table_name = "Dim_Product"
+                    columns = ["Product_ID Integer", "Product_Name String", "Category String"]
 
-                # Store the dimension table configuration in `dim_tables`
-                dim_tables[table_name] = {
-                    "columns": [{"name": col.split(" ")[0], "type": col.split(" ")[1]} for col in columns],
-                    "num_rows": 100  # Default number of rows
-                }
-                st.session_state.schema_updated = True  # Mark schema as updated
-
-                # Dynamically create a button to generate mock data
-                st.session_state.generate_data_button = True  # Flag to show the data generation button
+                    dim_tables[table_name] = {
+                        "columns": [{"name": col.split(" ")[0], "type": col.split(" ")[1]} for col in columns],
+                        "num_rows": 100
+                    }
+                    st.session_state.schema_updated = True
+                    st.session_state.generate_data_button = True
+                except Exception as e:
+                    st.error(f"Error parsing AI response: {e}. Please try again.")
 
 # Function to generate mock data based on schema
 def generate_mock_data():
-    excel_data = {}  # dict to hold DataFrame per table
+    excel_data = {}
     # Generate dimension tables
     for table_name, config in dim_tables.items():
-        # Create the dataframe with the ID column as the first column
-        dim_data = {"ID": range(1, config["num_rows"] + 1)}  # Add ID column first
+        dim_data = {"ID": range(1, config["num_rows"] + 1)}
         for col in config["columns"]:
             dim_data[col['name']] = [get_faker_func(col['type'])() for _ in range(config["num_rows"])]
-        # Ensure ID is always the first column
         df = pd.DataFrame(dim_data)
         excel_data[table_name] = df
 
     # Generate fact tables (if any)
     for table_name, config in fact_tables.items():
         fact_df = pd.DataFrame()
-        fact_df["Fact_ID"] = range(1, config["num_rows"] + 1)  # Unique Fact ID
-        # Automatically add foreign key columns for each linked dimension
+        fact_df["Fact_ID"] = range(1, config["num_rows"] + 1)
         for dim_name in config["linked_dimensions"]:
             dim_table = dim_tables[dim_name]
             dim_id_column = f"{dim_name}_ID"
@@ -143,19 +148,16 @@ def generate_mock_data():
 if "generate_data_button" in st.session_state and st.session_state.generate_data_button:
     if st.button("Generate Mock Data"):
         with st.spinner("Generating data..."):
-            excel_data = generate_mock_data()  # Generate the mock data based on the schema
+            excel_data = generate_mock_data()
 
-            # Check if excel_data is populated correctly
             if not excel_data:
                 st.error("No data was generated. Please make sure to define your tables and columns.")
             else:
-                # Create the Excel file in memory
                 buffer = io.BytesIO()
                 with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
                     for table_name, df in excel_data.items():
                         df.to_excel(writer, sheet_name=table_name, index=False)
 
-                # Now that the buffer is populated, you can provide it for downloading
                 st.success("✅ Excel file created successfully!")
                 buffer.seek(0)
                 st.download_button(
