@@ -138,18 +138,22 @@ if st.button("🚀 Generate Mock Data"):
     with st.spinner("Generating data..."):
         excel_data = generate_mock_data()  # Generate the mock data based on the schema
 
-        # Create the Excel file in memory
-        buffer = io.BytesIO()
-        with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-            for table_name, df in excel_data.items():
-                df.to_excel(writer, sheet_name=table_name, index=False)
+        # Check if excel_data is populated correctly
+        if not excel_data:
+            st.error("No data was generated. Please make sure to define your tables and columns.")
+        else:
+            # Create the Excel file in memory
+            buffer = io.BytesIO()
+            with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+                for table_name, df in excel_data.items():
+                    df.to_excel(writer, sheet_name=table_name, index=False)
 
-        # Now that the buffer is populated, you can provide it for downloading
-        st.success("✅ Excel file created successfully!")
-        buffer.seek(0)
-        st.download_button(
-            label="📥 Download Excel File",
-            data=buffer,
-            file_name="mock_data.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+            # Now that the buffer is populated, you can provide it for downloading
+            st.success("✅ Excel file created successfully!")
+            buffer.seek(0)
+            st.download_button(
+                label="📥 Download Excel File",
+                data=buffer,
+                file_name="mock_data.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
