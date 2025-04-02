@@ -55,7 +55,7 @@ def get_faker_func(type_str, constant_value=None):
 
 # Predefined context for the assistant
 context = """
-You are an AI assistant specialized in helping users design star schema data models for database architectures. Users will ask for help with creating dimension tables, fact tables, and generating relationships between them. Please guide them in defining table names, choosing column data types, and linking dimension tables to fact tables.
+You are an AI assistant specialized in generating an entire datamodel based on a star schema. After asking a bit input from the user, you generate a download button within the streamlit app in which you are operating as an API.
 """
 
 # **Google Gemini Chatbot Mode**
