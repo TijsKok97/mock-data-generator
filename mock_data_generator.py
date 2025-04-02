@@ -18,12 +18,12 @@ if language == "Dutch":
 else:
     fake = Faker("en_US")  # Initialize Faker for English language
 
-# User input: Choose number of tables
-num_dims = st.number_input("🟦 Number of Dimension Tables:", min_value=1, max_value=10, value=3)
-num_facts = st.number_input("🟥 Number of Fact Tables:", min_value=1, max_value=5, value=1)
+# User input: Choose number of tables with unique keys
+num_dims = st.number_input("🟦 Number of Dimension Tables:", min_value=1, max_value=10, value=3, key="num_dims")
+num_facts = st.number_input("🟥 Number of Fact Tables:", min_value=1, max_value=5, value=1, key="num_facts")
 
 # User chooses between AI chatbot or manual configuration
-mode = st.radio("How would you like to define the tables?", ["AI Chatbot Mode", "Manual Builder Mode"])
+mode = st.radio("How would you like to define the tables?", ["AI Chatbot Mode", "Manual Builder Mode"], key="mode")
 
 # Dictionary to store table configurations
 dim_tables = {}
@@ -71,9 +71,9 @@ col1, col2 = st.columns([1, 2])  # Left column will be smaller, right column wil
 with col1:
     # Input for manual configuration
     st.subheader("🛠️ Manual Configuration")
-    num_dims = st.number_input("🟦 Number of Dimension Tables:", min_value=1, max_value=10, value=3)
-    num_facts = st.number_input("🟥 Number of Fact Tables:", min_value=1, max_value=5, value=1)
-    mode = st.radio("How would you like to define the tables?", ["AI Chatbot Mode", "Manual Builder Mode"])
+    num_dims = st.number_input("🟦 Number of Dimension Tables:", min_value=1, max_value=10, value=3, key="manual_num_dims")
+    num_facts = st.number_input("🟥 Number of Fact Tables:", min_value=1, max_value=5, value=1, key="manual_num_facts")
+    mode = st.radio("How would you like to define the tables?", ["AI Chatbot Mode", "Manual Builder Mode"], key="manual_mode")
 
 with col2:
     # AI Chatbot Display
