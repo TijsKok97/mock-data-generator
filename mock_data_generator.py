@@ -3,6 +3,29 @@ import pandas as pd
 import random
 from faker import Faker
 
+# Function to generate a mock schema (simulated AI response)
+def generate_mock_schema():
+    # Dummy schema generation (using Faker for this simulation)
+    schema = {
+        "tables": {
+            "Product": {
+                "columns": ["Product_ID", "Product_Name", "Category"],
+                "data_types": ["Integer", "String", "String"]
+            },
+            "Category": {
+                "columns": ["Category_ID", "Category_Name"],
+                "data_types": ["Integer", "String"]
+            }
+        },
+        "relationships": {
+            "Product": {
+                "foreign_key": "Category_ID",
+                "references": "Category"
+            }
+        }
+    }
+    return schema
+
 # Initialize Faker for data generation
 language = st.selectbox("Choose language for data generation.", ["English", "Dutch"])
 
@@ -92,26 +115,3 @@ def generate_mock_data(schema):
     fact_df.to_excel(output, index=False)
     output.save()
     return output.path
-
-# Function to generate a mock schema (simulated AI response)
-def generate_mock_schema():
-    # Dummy schema generation (using Faker for this simulation)
-    schema = {
-        "tables": {
-            "Product": {
-                "columns": ["Product_ID", "Product_Name", "Category"],
-                "data_types": ["Integer", "String", "String"]
-            },
-            "Category": {
-                "columns": ["Category_ID", "Category_Name"],
-                "data_types": ["Integer", "String"]
-            }
-        },
-        "relationships": {
-            "Product": {
-                "foreign_key": "Category_ID",
-                "references": "Category"
-            }
-        }
-    }
-    return schema
