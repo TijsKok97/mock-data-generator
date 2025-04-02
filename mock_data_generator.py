@@ -147,28 +147,38 @@ if st.button("🚀 Generate Mock Data"):
 # Set your Google Gemini API key
 api_key = st.secrets["google_api_key"]
 
-# **Google Gemini Chatbot Mode**
-if mode == "AI Chatbot Mode":
-    st.title("Gemini AI Chatbot")
+# Predefined context for the assistant
+context = """
+You are an AI assistant specialized in helping users design star schema data models for database architectures. Users will ask for help with creating dimension tables, fact tables, and generating relationships between them. Please guide them in defining table names, choosing column data types, and linking dimension tables to fact tables.
+"""
 
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
+# **Google Gemini Chatbot Mode**
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+if mode == "AI Chatbot Mode":
+    st.title("Gemini AI Chatbot for Star Schema Design")
 
     # Display previous messages
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    if prompt := st.chat_input("What is up?"):
+    # User input handling
+    if prompt := st.chat_input("How can I help you with your star schema?"):
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
 
+        # Append context to every user query
+        full_prompt = context + "\n" + prompt
+
         with st.chat_message("assistant"):
-            # Using Google's Gemini API
+            # Using Google's Gemini API with context for specialization
             client = genai.Client(api_key=api_key)
             response = client.models.generate_content(
-                model="gemini-2.0-flash", contents=prompt
+                model="gemini-2.0-flash", contents=full_prompt
             )
+
             st.write(response.text.strip())  # Display the response
             st.session_state.messages.append({"role": "assistant", "content": response.text.strip()});
