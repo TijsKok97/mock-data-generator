@@ -87,7 +87,7 @@ if mode == "AI Chatbot Mode":
             # Using Google's Gemini API with context for specialization
             client = genai.Client(api_key=st.secrets["google_api_key"])
             response = client.models.generate_content(
-                model="gemini-2.5-pro-experimental", contents=full_prompt
+                model="gemini-2.0-flash", contents=full_prompt
             )
 
             assistant_reply = response.text.strip()
