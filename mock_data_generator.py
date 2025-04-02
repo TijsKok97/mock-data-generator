@@ -6,7 +6,7 @@ import io
 
 # Welcome message
 st.markdown("### 📊 Welcome to MockedUp 🚀")
-st.write("Define your dataset structure either manually or through AI-powered suggestions!")
+st.write("Define your dataset structure here! You can use the help of the chatbot at the right for inspiration.")
 
 # Define the data types available from Faker
 data_types = {
