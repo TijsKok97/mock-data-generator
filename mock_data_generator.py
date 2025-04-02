@@ -74,7 +74,7 @@ if mode == "AI Chatbot Mode":
             st.markdown(message["content"])
 
     # User input handling
-    if prompt := st.chat_input("Hello, I am the Mockbot. Tell me about your case and I will help you by generating a dimensional model!"):
+    if prompt := st.chat_input("Hello, I am the Mockbot. Tell me about your case?"):
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
