@@ -94,9 +94,9 @@ if mode == "AI Chatbot Mode":
             st.session_state.messages.append({"role": "assistant", "content": assistant_reply})
 
             # Logic to capture and store the table configuration from the assistant's response
-            # Example: If the assistant responds with "Dimension Table: Dim_Product", we store that info
+            # Parse the response to update dim_tables and fact_tables dynamically
+
             if "dimension table" in assistant_reply.lower():
-                # Extract table names, column names, and types from the AI's response (you can use regex or basic string parsing)
                 table_name = "Dim_Product"  # Example extraction from the response
                 columns = ["Product_ID (Integer)", "Product_Name (String)", "Category (String)"]
 
