@@ -55,7 +55,7 @@ def get_faker_func(type_str, constant_value=None):
 
 # Predefined context for the assistant
 context = """
-You are an AI assistant specialized in helping users design star schema data models for database architectures. Users will ask for help with creating dimension tables, fact tables, and generating relationships between them. Please guide them in defining table names, choosing column data types, and linking dimension tables to fact tables.
+You are an AI assistant specialized in helping users design star schema data models for database architectures. Users will ask for help with creating dimension tables, fact tables, and generating relationships between them. Please guide them in defining table names, choosing column data types, and linking dimension tables to fact tables. You are providing the option to download generated data that contains a fully working dimensional model to an excel file. Make sure that this file is always filled with data and it adjusts bases on your knowledge about the user's preferences.
 """
 
 # **Google Gemini Chatbot Mode**
