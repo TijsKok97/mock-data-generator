@@ -1,9 +1,9 @@
 import streamlit as st
-from google.genai import Client  # Assuming you have access to Google Gemini SDK
+import openai
 from faker import Faker
 
-# Initialize Google Gemini Client
-client = Client(api_key="YOUR_API_KEY_HERE")  # Replace with your actual Gemini API key
+# Set your OpenAI API key
+openai.api_key = "YOUR_OPENAI_API_KEY"  # Replace with your OpenAI API key
 
 # Initialize Faker for data generation
 language = st.selectbox("Choose language for data generation.", ["English", "Dutch"])
@@ -21,9 +21,8 @@ if 'schema' not in st.session_state:
 # Mode selection
 mode = st.radio("Select Mode", ["AI Chatbot Mode", "Manual Mode"])
 
-# Function to generate schema using Gemini API
+# Function to generate schema using OpenAI GPT
 def generate_ai_schema():
-    # Prompt to send to Gemini API to generate the schema
     prompt = """
     Generate a database schema with the following details:
     - Create two dimension tables: Product and Category.
@@ -34,9 +33,14 @@ def generate_ai_schema():
     - Provide data types: Integer, String, Float for appropriate columns.
     """
 
-    response = client.models.gemini("2.1-flash", contents=prompt)
+    # Request to OpenAI's GPT-3 for schema generation
+    response = openai.Completion.create(
+        model="text-davinci-003",  # You can choose a different model as needed
+        prompt=prompt,
+        max_tokens=500
+    )
 
-    # Extracting relevant schema data from Gemini's response (simplified)
+    # Extracting relevant schema data from GPT response (simplified)
     generated_schema = {
         'dimensions': [
             {"table_name": "Product", "columns": ["Product_ID", "Product_Name", "Category_ID"], "data_types": ["Integer", "String", "Integer"]},
@@ -53,7 +57,7 @@ def generate_ai_schema():
 if mode == "AI Chatbot Mode":
     st.title("AI Chatbot Mode - Schema Generation")
 
-    # Generate schema using Gemini API
+    # Generate schema using GPT
     ai_schema = generate_ai_schema()
 
     # Pre-fill the schema in session state
