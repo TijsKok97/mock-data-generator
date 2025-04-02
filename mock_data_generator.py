@@ -26,45 +26,14 @@ data_types = {
     "Custom": "Custom"
 }
 
-# Initialize Faker for data generation
-fake = Faker("en_US")  # Default to English for simplicity
-
-# Function to get the corresponding Faker function based on the data type
-def get_faker_func(data_type):
-    if data_type == "String":
-        return fake.word
-    elif data_type == "Integer":
-        return lambda: fake.random_int(min=1, max=1000)
-    elif data_type == "Boolean":
-        return lambda: fake.random_element(elements=[True, False])
-    elif data_type == "City":
-        return fake.city
-    elif data_type == "Name":
-        return fake.name
-    elif data_type == "Date":
-        return fake.date_this_decade
-    elif data_type == "Email":
-        return fake.email
-    elif data_type == "Street Address":
-        return fake.street_address
-    elif data_type == "Country":
-        return fake.country
-    elif data_type == "Postal Code":
-        return fake.postcode
-    elif data_type == "Phone Number":
-        return fake.phone_number
-    elif data_type == "Company":
-        return fake.company
-    elif data_type == "Currency Amount":
-        return lambda: fake.pydecimal(left_digits=5, right_digits=2, positive=True)
-    else:
-        return lambda: "Custom Data"  # Default case for custom data type
-
 # Manual configuration inputs
 st.subheader("🛠️ Manual Configuration")
 language = st.selectbox("Choose language for data generation:", ["English", "Dutch"], key="manual_language")
 num_dims = st.number_input("🟦 Number of Dimension Tables:", min_value=1, max_value=10, value=3, key="manual_num_dims")
 num_facts = st.number_input("🟥 Number of Fact Tables:", min_value=1, max_value=5, value=1, key="manual_num_facts")
+
+# Initialize Faker for data generation based on selected language
+fake = Faker("nl_NL") if language == "Dutch" else Faker("en_US")
 
 # Dictionary to store table configurations
 dim_tables = {}
@@ -84,6 +53,7 @@ with col1:
         st.subheader(f"Dimension Table {i+1}")
         dim_name = st.text_input(f"Dimension Table {i+1} Name", key=f"dim_name_{i}")
         num_columns = st.number_input(f"Number of Columns for Dimension Table {i+1}", min_value=1, max_value=10, value=3, key=f"dim_num_columns_{i}")
+        num_rows = st.number_input(f"Number of Rows for Dimension Table {i+1}", min_value=1, max_value=1000, value=100, key=f"dim_num_rows_{i}")
         
         column_names = []
         column_types = []
@@ -94,13 +64,14 @@ with col1:
             column_names.append(col_name)
             column_types.append(col_type)
 
-        dimension_table_configs.append({"name": dim_name, "columns": column_names, "types": column_types})
+        dimension_table_configs.append({"name": dim_name, "columns": column_names, "types": column_types, "rows": num_rows})
 
     # Fact table configuration
     for i in range(num_facts):
         st.subheader(f"Fact Table {i+1}")
         fact_name = st.text_input(f"Fact Table {i+1} Name", key=f"fact_name_{i}")
         num_columns = st.number_input(f"Number of Columns for Fact Table {i+1}", min_value=1, max_value=10, value=3, key=f"fact_num_columns_{i}")
+        num_rows = st.number_input(f"Number of Rows for Fact Table {i+1}", min_value=1, max_value=1000, value=100, key=f"fact_num_rows_{i}")
         
         column_names = []
         column_types = []
@@ -114,7 +85,7 @@ with col1:
         # Select related dimension tables for foreign keys
         related_dims = st.multiselect(f"Select related dimension tables for {fact_name}", options=[dim["name"] for dim in dimension_table_configs], key=f"fact_{i}_related_dims")
         
-        fact_table_configs.append({"name": fact_name, "columns": column_names, "types": column_types, "related_dims": related_dims})
+        fact_table_configs.append({"name": fact_name, "columns": column_names, "types": column_types, "related_dims": related_dims, "rows": num_rows})
 
 with col2:
     # AI Chatbot (smaller, serves as a help section)
@@ -153,24 +124,24 @@ def generate_mock_data():
     
     # Generate dimension tables
     for dim in dimension_table_configs:
-        dim_data = {"ID": range(1, 101)}  # Example 100 rows of data
+        dim_data = {"ID": range(1, dim["rows"] + 1)}  # Use the specified number of rows
         for i, col_name in enumerate(dim["columns"]):
-            dim_data[col_name] = [get_faker_func(dim["types"][i])() for _ in range(100)]
+            dim_data[col_name] = [get_faker_func(dim["types"][i])() for _ in range(dim["rows"])]  # Use the specified number of rows
         df = pd.DataFrame(dim_data)
         excel_data[dim["name"]] = df
 
     # Generate fact tables
     for fact in fact_table_configs:
-        fact_data = {"Fact_ID": range(1, 101)}  # Example 100 rows of data
+        fact_data = {"Fact_ID": range(1, fact["rows"] + 1)}  # Use the specified number of rows
         for i, col_name in enumerate(fact["columns"]):
-            fact_data[col_name] = [get_faker_func(fact["types"][i])() for _ in range(100)]
+            fact_data[col_name] = [get_faker_func(fact["types"][i])() for _ in range(fact["rows"])]  # Use the specified number of rows
         
         # Handle foreign key relationships
         for dim_name in fact["related_dims"]:
             if dim_name not in excel_data:
                 st.error(f"Error: The related dimension table '{dim_name}' is missing data.")
                 return {}
-            fact_data[f"{dim_name}_ID"] = excel_data[dim_name]["ID"].sample(n=100, replace=True).values
+            fact_data[f"{dim_name}_ID"] = excel_data[dim_name]["ID"].sample(n=fact["rows"], replace=True).values
         
         df = pd.DataFrame(fact_data)
         excel_data[fact["name"]] = df
