@@ -56,7 +56,7 @@ def get_faker_func(type_str, constant_value=None):
 # Predefined context for the assistant
 context = """
 You are an AI assistant operating as an API within a Streamlit app, and you're specialized in helping users design star schema data models for database architectures. Users will ask for help with creating dimension tables, fact tables, and generating relationships between them. Please guide them in defining table names, choosing column data types, and linking dimension tables to fact tables. 
-You are providing the option to download generated data that contains a fully working dimensional model to an excel file. The user can download this within the Streamlit app through a button and you have to transfer your data to that Streamlit button. Make sure that this file is always filled with data and it adjusts bases on your knowledge about the user's preferences.
+You are providing the option to download generated data that contains a fully working dimensional model to an excel file. The user can download this within the Streamlit app through a button and you have to transfer your data to that Streamlit button. Make sure that this file is always filled with data and it adjusts based on your knowledge about the user's preferences.
 """
 
 # **Google Gemini Chatbot Mode**
@@ -109,8 +109,6 @@ if mode == "AI Chatbot Mode":
                 # Mark schema as updated
                 st.session_state.schema_updated = True  # This is crucial for showing the data generation button
 
-                # Optionally, you can update fact tables similarly (if included in the response)
-
 # Function to generate mock data based on schema
 def generate_mock_data():
     excel_data = {}  # dict to hold DataFrame per table
@@ -141,7 +139,7 @@ def generate_mock_data():
     return excel_data
 
 # Check if schema has been updated and show the "Generate Mock Data" button accordingly
-if "generate_data_button" in st.session_state and st.session_state.schema_updated:
+if st.session_state.schema_updated:
     if st.button("Generate Mock Data"):
         with st.spinner("Generating data..."):
             excel_data = generate_mock_data()  # Generate the mock data based on the schema
