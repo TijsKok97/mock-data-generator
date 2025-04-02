@@ -86,12 +86,12 @@ with col1:
         
         fact_table_configs.append({"name": fact_name, "columns": column_names, "types": column_types, "related_dims": related_dims})
 
-    # Display configured tables for review
-    st.markdown("### Configured Tables Review")
-    st.write("### Dimension Tables:")
-    st.write(dimension_table_configs)
-    st.write("### Fact Tables:")
-    st.write(fact_table_configs)
+    # Display configured tables for review (Removed this part to avoid displaying the table configs)
+    # st.markdown("### Configured Tables Review")
+    # st.write("### Dimension Tables:")
+    # st.write(dimension_table_configs)
+    # st.write("### Fact Tables:")
+    # st.write(fact_table_configs)
 
 with col2:
     # AI Chatbot (smaller, serves as a help section)
