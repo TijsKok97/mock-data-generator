@@ -147,8 +147,6 @@ if st.button("🚀 Generate Mock Data"):
 # Set your OpenAI API key from Streamlit secrets
 openai.api_key = st.secrets["api"]
 
-st.write(st.secrets)
-
 # **AI Chatbot Mode**
 if mode == "AI Chatbot Mode":
     st.title("ChatGPT-like Clone")
