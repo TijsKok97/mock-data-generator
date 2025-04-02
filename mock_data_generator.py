@@ -1,166 +1,103 @@
 import streamlit as st
-import pandas as pd
+from google.genai import Client  # Assuming you have access to Google Gemini SDK
 from faker import Faker
-import google.genai as genai  # Import the google-genai library
-import random
-import io
 
-# Welcome message
-st.markdown("### 📊 Welcome to MockedUp 🚀")
-st.write("Define your dataset structure either manually or through AI-powered suggestions!")
+# Initialize Google Gemini Client
+client = Client(api_key="YOUR_API_KEY_HERE")  # Replace with your actual Gemini API key
 
-# Language selection for Faker
-language = st.selectbox("Choose language for data generation:", ["English", "Dutch"])
+# Initialize Faker for data generation
+language = st.selectbox("Choose language for data generation.", ["English", "Dutch"])
 
-# Initialize Faker based on selected language
 if language == "Dutch":
-    fake = Faker("nl_NL")  # Initialize Faker for Dutch language
+    fake = Faker("nl_NL")
 else:
-    fake = Faker("en_US")  # Initialize Faker for English language
+    fake = Faker("en_US")
 
-# User input: Choose number of tables
-num_dims = st.number_input("🟦 Number of Dimension Tables:", min_value=1, max_value=10, value=3)
-num_facts = st.number_input("🟥 Number of Fact Tables:", min_value=1, max_value=5, value=1)
-
-# User chooses between AI chatbot or manual configuration
-mode = st.radio("How would you like to define the tables?", ["AI Chatbot Mode", "Manual Builder Mode"])
-
-# Dictionary to store table configurations
-dim_tables = {}
-fact_tables = {}
-
-# Available data types
-data_types = {
-    "String": fake.word,
-    "Integer": lambda: fake.random_int(min=1, max=1000),
-    "Boolean": lambda: fake.random_element(elements=[0, 1]),
-    "City": fake.city,
-    "Name": fake.name,
-    "Date": fake.date_this_decade,
-    "Email": fake.email,
-    "Street Address": fake.street_address,
-    "Country": fake.country,
-    "Postal Code": fake.postcode,
-    "Phone Number": fake.phone_number,
-    "Company": fake.company,
-    "Currency Amount": lambda: fake.pydecimal(left_digits=5, right_digits=2, positive=True),
-    "Custom": lambda value: value
-}
-
-# Helper to convert string keys to functions
-def get_faker_func(type_str, constant_value=None):
-    if constant_value:
-        return lambda: constant_value
-    return data_types.get(type_str, lambda: "N/A")
-
-# Predefined context for the assistant
-context = """
-You are an AI assistant specialized in helping users design star schema data models for database architectures. Users will ask for help with creating dimension tables, fact tables, and generating relationships between them. Please guide them in defining table names, choosing column data types, and linking dimension tables to fact tables.
-"""
-
-# **Google Gemini Chatbot Mode**
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-if "schema_updated" not in st.session_state:
+# Store user input for schema and mock data generation
+if 'schema' not in st.session_state:
+    st.session_state.schema = {'dimensions': [], 'facts': []}
     st.session_state.schema_updated = False
 
+# Mode selection
+mode = st.radio("Select Mode", ["AI Chatbot Mode", "Manual Mode"])
+
+# Function to generate schema using Gemini API
+def generate_ai_schema():
+    # Prompt to send to Gemini API to generate the schema
+    prompt = """
+    Generate a database schema with the following details:
+    - Create two dimension tables: Product and Category.
+    - Create one fact table: Sales.
+    - Product table should have columns: Product_ID, Product_Name, Category_ID.
+    - Category table should have columns: Category_ID, Category_Name.
+    - Sales table should have columns: Sale_ID, Product_ID, Quantity, Total_Price.
+    - Provide data types: Integer, String, Float for appropriate columns.
+    """
+
+    response = client.models.gemini("2.1-flash", contents=prompt)
+
+    # Extracting relevant schema data from Gemini's response (simplified)
+    generated_schema = {
+        'dimensions': [
+            {"table_name": "Product", "columns": ["Product_ID", "Product_Name", "Category_ID"], "data_types": ["Integer", "String", "Integer"]},
+            {"table_name": "Category", "columns": ["Category_ID", "Category_Name"], "data_types": ["Integer", "String"]}
+        ],
+        'facts': [
+            {"table_name": "Sales", "columns": ["Sale_ID", "Product_ID", "Quantity", "Total_Price"], "data_types": ["Integer", "Integer", "Integer", "Float"]}
+        ]
+    }
+
+    return generated_schema
+
+# AI Mode: Generate schema based on simulated AI response
 if mode == "AI Chatbot Mode":
-    st.title("The Mockbot")
+    st.title("AI Chatbot Mode - Schema Generation")
 
-    # Display previous messages
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+    # Generate schema using Gemini API
+    ai_schema = generate_ai_schema()
 
-    # User input handling
-    if prompt := st.chat_input("How can I help you with your star schema?"):
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
+    # Pre-fill the schema in session state
+    st.session_state.schema = ai_schema
+    st.session_state.schema_updated = True
 
-        # Include number of dimensions and facts in context
-        full_prompt = f"{context}\nYou are working with {num_dims} dimension tables and {num_facts} fact tables.\n" + prompt
+elif mode == "Manual Mode":
+    st.title("Manual Mode - Define Schema")
+    st.session_state.schema_updated = False
 
-        with st.chat_message("assistant"):
-            # Using Google's Gemini API with context for specialization
-            client = genai.Client(api_key=st.secrets["google_api_key"])
-            response = client.models.generate_content(
-                model="gemini-2.0-flash", contents=full_prompt
-            )
+# Manual input: Define dimensions and facts manually
+if st.session_state.schema_updated or mode == "Manual Mode":
+    # Input for Dimensions
+    st.subheader("Define Dimensions (Tables)")
+    num_dimensions = st.number_input("How many dimensions?", min_value=1, max_value=10, value=2)
+    for i in range(num_dimensions):
+        with st.expander(f"Dimension {i+1}"):
+            table_name = st.text_input(f"Table name for Dimension {i+1}", key=f"dim_{i}_table_name", value=st.session_state.schema['dimensions'][i]['table_name'] if i < len(st.session_state.schema['dimensions']) else "")
+            columns = st.text_area(f"Columns for Dimension {i+1} (comma separated)", key=f"dim_{i}_columns", value=", ".join(st.session_state.schema['dimensions'][i]['columns']) if i < len(st.session_state.schema['dimensions']) else "")
+            data_types = st.text_area(f"Data Types for Dimension {i+1} (comma separated)", key=f"dim_{i}_data_types", value=", ".join(st.session_state.schema['dimensions'][i]['data_types']) if i < len(st.session_state.schema['dimensions']) else "")
 
-            assistant_reply = response.text.strip()
-            st.write(assistant_reply)  # Display the response
-            st.session_state.messages.append({"role": "assistant", "content": assistant_reply})
+            # Save input to session state
+            st.session_state.schema['dimensions'][i] = {
+                'table_name': table_name,
+                'columns': columns.split(','),
+                'data_types': data_types.split(',')
+            }
 
-            # Logic to capture and store the table configuration from the assistant's response
-            # Example: If the assistant responds with "Dimension Table: Dim_Product", we store that info
-            if "dimension table" in assistant_reply.lower():
-                # Extract table names, column names, and types from the AI's response (you can use regex or basic string parsing)
-                table_name = "Dim_Product"  # Example extraction from the response
-                columns = ["Product_ID (Integer)", "Product_Name (String)", "Category (String)"]
+    # Input for Facts
+    st.subheader("Define Facts (Tables)")
+    num_facts = st.number_input("How many facts?", min_value=1, max_value=10, value=1)
+    for i in range(num_facts):
+        with st.expander(f"Fact {i+1}"):
+            table_name = st.text_input(f"Table name for Fact {i+1}", key=f"fact_{i}_table_name", value=st.session_state.schema['facts'][i]['table_name'] if i < len(st.session_state.schema['facts']) else "")
+            columns = st.text_area(f"Columns for Fact {i+1} (comma separated)", key=f"fact_{i}_columns", value=", ".join(st.session_state.schema['facts'][i]['columns']) if i < len(st.session_state.schema['facts']) else "")
+            data_types = st.text_area(f"Data Types for Fact {i+1} (comma separated)", key=f"fact_{i}_data_types", value=", ".join(st.session_state.schema['facts'][i]['data_types']) if i < len(st.session_state.schema['facts']) else "")
 
-                # Store the dimension table configuration in `dim_tables`
-                dim_tables[table_name] = {
-                    "columns": [{"name": col.split(" ")[0], "type": col.split(" ")[1]} for col in columns],
-                    "num_rows": 100  # Default number of rows
-                }
-                st.session_state.schema_updated = True  # Mark schema as updated
+            # Save input to session state
+            st.session_state.schema['facts'][i] = {
+                'table_name': table_name,
+                'columns': columns.split(','),
+                'data_types': data_types.split(',')
+            }
 
-                # Dynamically create a button to generate mock data
-                st.session_state.generate_data_button = True  # Flag to show the data generation button
-
-# Function to generate mock data based on schema
-def generate_mock_data():
-    excel_data = {}  # dict to hold DataFrame per table
-    # Generate dimension tables
-    for table_name, config in dim_tables.items():
-        # Create the dataframe with the ID column as the first column
-        dim_data = {"ID": range(1, config["num_rows"] + 1)}  # Add ID column first
-        for col in config["columns"]:
-            dim_data[col['name']] = [get_faker_func(col['type'])() for _ in range(config["num_rows"])]
-        # Ensure ID is always the first column
-        df = pd.DataFrame(dim_data)
-        excel_data[table_name] = df
-
-    # Generate fact tables (if any)
-    for table_name, config in fact_tables.items():
-        fact_df = pd.DataFrame()
-        fact_df["Fact_ID"] = range(1, config["num_rows"] + 1)  # Unique Fact ID
-        # Automatically add foreign key columns for each linked dimension
-        for dim_name in config["linked_dimensions"]:
-            dim_table = dim_tables[dim_name]
-            dim_id_column = f"{dim_name}_ID"
-            fact_df[dim_id_column] = excel_data[dim_name]["ID"].sample(n=config["num_rows"], replace=True).values
-        for col in config["columns"]:
-            if col["name"] != "Fact_ID" and not col["name"].endswith("_ID"):
-                fact_df[col["name"]] = [get_faker_func(col["type"])() for _ in range(config["num_rows"])]
-        excel_data[table_name] = fact_df
-
-    return excel_data
-
-# Dynamically generate button and download the Excel file when the schema is ready
-if "generate_data_button" in st.session_state and st.session_state.generate_data_button:
-    if st.button("Generate Mock Data"):
-        with st.spinner("Generating data..."):
-            excel_data = generate_mock_data()  # Generate the mock data based on the schema
-
-            # Check if excel_data is populated correctly
-            if not excel_data:
-                st.error("No data was generated. Please make sure to define your tables and columns.")
-            else:
-                # Create the Excel file in memory
-                buffer = io.BytesIO()
-                with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-                    for table_name, df in excel_data.items():
-                        df.to_excel(writer, sheet_name=table_name, index=False)
-
-                # Now that the buffer is populated, you can provide it for downloading
-                st.success("✅ Excel file created successfully!")
-                buffer.seek(0)
-                st.download_button(
-                    label="📥 Download Excel File",
-                    data=buffer,
-                    file_name="mock_data.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
+    # Button to show the generated schema (for validation)
+    if st.button("Show Generated Schema"):
+        st.write(st.session_state.schema)
