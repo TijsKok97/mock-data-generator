@@ -140,8 +140,8 @@ def generate_mock_data():
 
     return excel_data
 
-# Dynamically generate button and download the Excel file when the schema is ready
-if "generate_data_button" in st.session_state and st.session_state.generate_data_button:
+# Check if schema has been updated and show the "Generate Mock Data" button accordingly
+if "generate_data_button" in st.session_state and st.session_state.schema_updated:
     if st.button("Generate Mock Data"):
         with st.spinner("Generating data..."):
             excel_data = generate_mock_data()  # Generate the mock data based on the schema
