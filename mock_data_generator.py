@@ -65,76 +65,50 @@ if "messages" not in st.session_state:
 if "schema_updated" not in st.session_state:
     st.session_state.schema_updated = False
 
-# Layout with two columns: left for manual input, right for AI Chatbot
-left_column, right_column = st.columns([3, 1])  # Adjust the width ratio of the columns
+if mode == "AI Chatbot Mode":
+    st.title("The Mockbot")
 
-# Left Column (Manual Input)
-with left_column:
-    st.title("Manual Builder Mode")
+    # Display previous messages
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
 
-    # User input: Number of dimension tables, fact tables, etc.
-    num_dims = st.number_input("🟦 Number of Dimension Tables:", min_value=1, max_value=10, value=3)
-    num_facts = st.number_input("🟥 Number of Fact Tables:", min_value=1, max_value=5, value=1)
+    # User input handling
+    if prompt := st.chat_input("How can I help you with your star schema?"):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
 
-    # User chooses between AI chatbot or manual configuration
-    mode = st.radio("How would you like to define the tables?", ["AI Chatbot Mode", "Manual Builder Mode"])
+        # Include number of dimensions and facts in context
+        full_prompt = f"{context}\nYou are working with {num_dims} dimension tables and {num_facts} fact tables.\n" + prompt
 
-    # User selects language for Faker data generation
-    language = st.selectbox("Choose language for data generation:", ["English", "Dutch"])
+        with st.chat_message("assistant"):
+            # Using Google's Gemini API with context for specialization
+            client = genai.Client(api_key=st.secrets["google_api_key"])
+            response = client.models.generate_content(
+                model="gemini-2.0-flash", contents=full_prompt
+            )
 
-    if language == "Dutch":
-        fake = Faker("nl_NL")
-    else:
-        fake = Faker("en_US")
+            assistant_reply = response.text.strip()
+            st.write(assistant_reply)  # Display the response
+            st.session_state.messages.append({"role": "assistant", "content": assistant_reply})
 
-    # Here you can add manual configuration input for dimension tables and fact tables.
+            # Logic to capture and store the table configuration from the assistant's response
+            # Example: If the assistant responds with "Dimension Table: Dim_Product", we store that info
+            if "dimension table" in assistant_reply.lower():
+                # Extract table names, column names, and types from the AI's response (you can use regex or basic string parsing)
+                table_name = "Dim_Product"  # Example extraction from the response
+                columns = ["Product_ID (Integer)", "Product_Name (String)", "Category (String)"]
 
-# Right Column (AI Chatbot)
-with right_column:
-    if mode == "AI Chatbot Mode":
-        st.title("The Mockbot")
+                # Store the dimension table configuration in dim_tables
+                dim_tables[table_name] = {
+                    "columns": [{"name": col.split(" ")[0], "type": col.split(" ")[1]} for col in columns],
+                    "num_rows": 100  # Default number of rows
+                }
+                st.session_state.schema_updated = True  # Mark schema as updated
 
-        # Display previous messages
-        for message in st.session_state.messages:
-            with st.chat_message(message["role"]):
-                st.markdown(message["content"])
-
-        # User input handling
-        if prompt := st.chat_input("How can I help you with your star schema?"):
-            st.session_state.messages.append({"role": "user", "content": prompt})
-            with st.chat_message("user"):
-                st.markdown(prompt)
-
-            # Include number of dimensions and facts in context
-            full_prompt = f"{context}\nYou are working with {num_dims} dimension tables and {num_facts} fact tables.\n" + prompt
-
-            with st.chat_message("assistant"):
-                # Using Google's Gemini API with context for specialization
-                client = genai.Client(api_key=st.secrets["google_api_key"])
-                response = client.models.generate_content(
-                    model="gemini-2.0-flash", contents=full_prompt
-                )
-
-                assistant_reply = response.text.strip()
-                st.write(assistant_reply)  # Display the response
-                st.session_state.messages.append({"role": "assistant", "content": assistant_reply})
-
-                # Logic to capture and store the table configuration from the assistant's response
-                # Example: If the assistant responds with "Dimension Table: Dim_Product", we store that info
-                if "dimension table" in assistant_reply.lower():
-                    # Extract table names, column names, and types from the AI's response (you can use regex or basic string parsing)
-                    table_name = "Dim_Product"  # Example extraction from the response
-                    columns = ["Product_ID (Integer)", "Product_Name (String)", "Category (String)"]
-
-                    # Store the dimension table configuration in dim_tables
-                    dim_tables[table_name] = {
-                        "columns": [{"name": col.split(" ")[0], "type": col.split(" ")[1]} for col in columns],
-                        "num_rows": 100  # Default number of rows
-                    }
-                    st.session_state.schema_updated = True  # Mark schema as updated
-
-                    # Dynamically create a button to generate mock data
-                    st.session_state.generate_data_button = True  # Flag to show the data generation button
+                # Dynamically create a button to generate mock data
+                st.session_state.generate_data_button = True  # Flag to show the data generation button
 
 # Function to generate mock data based on schema
 def generate_mock_data():
