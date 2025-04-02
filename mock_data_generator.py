@@ -157,7 +157,7 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 if mode == "AI Chatbot Mode":
-    st.title("Say Hi to the Mockbot! Happy to assist you in creating a mockup datamodel in a star schema.")
+    st.title("The Mockbot")
 
     # Display previous messages
     for message in st.session_state.messages:
