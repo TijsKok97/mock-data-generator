@@ -52,6 +52,9 @@ if "messages" not in st.session_state:
 if "schema_updated" not in st.session_state:
     st.session_state.schema_updated = False
 
+# User input to define whether the user wants Chatbot Mode or Manual Mode
+mode = st.radio("How would you like to define the tables?", ["AI Chatbot Mode", "Manual Builder Mode"])
+
 if mode == "AI Chatbot Mode":
     st.title("The Mockbot")
 
