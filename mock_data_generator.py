@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 from faker import Faker
-import google.genai as genai  # Import the google-genai library
 import random
 import io
 
@@ -86,13 +85,6 @@ with col1:
         
         fact_table_configs.append({"name": fact_name, "columns": column_names, "types": column_types, "related_dims": related_dims})
 
-    # Display configured tables for review (Removed this part to avoid displaying the table configs)
-    # st.markdown("### Configured Tables Review")
-    # st.write("### Dimension Tables:")
-    # st.write(dimension_table_configs)
-    # st.write("### Fact Tables:")
-    # st.write(fact_table_configs)
-
 with col2:
     # AI Chatbot (smaller, serves as a help section)
     st.title("The Mockbot")
@@ -122,6 +114,10 @@ with col2:
 
 # Now, generating mock data based on the configured schema
 def generate_mock_data():
+    if not dimension_table_configs or not fact_table_configs:
+        st.error("No tables configured. Please make sure to define your dimension and fact tables.")
+        return {}
+
     excel_data = {}
     
     # Generate dimension tables
@@ -140,6 +136,9 @@ def generate_mock_data():
         
         # Handle foreign key relationships
         for dim_name in fact["related_dims"]:
+            if dim_name not in excel_data:
+                st.error(f"Error: The related dimension table '{dim_name}' is missing data.")
+                return {}
             fact_data[f"{dim_name}_ID"] = excel_data[dim_name]["ID"].sample(n=100, replace=True).values
         
         df = pd.DataFrame(fact_data)
@@ -152,17 +151,18 @@ if st.button("Generate Mock Data"):
     with st.spinner("Generating data..."):
         excel_data = generate_mock_data()
 
-        # Create Excel file in memory
-        buffer = io.BytesIO()
-        with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-            for table_name, df in excel_data.items():
-                df.to_excel(writer, sheet_name=table_name, index=False)
+        if excel_data:
+            # Create Excel file in memory
+            buffer = io.BytesIO()
+            with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+                for table_name, df in excel_data.items():
+                    df.to_excel(writer, sheet_name=table_name, index=False)
 
-        st.success("✅ Excel file created successfully!")
-        buffer.seek(0)
-        st.download_button(
-            label="📥 Download Excel File",
-            data=buffer,
-            file_name="mock_data.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+            st.success("✅ Excel file created successfully!")
+            buffer.seek(0)
+            st.download_button(
+                label="📥 Download Excel File",
+                data=buffer,
+                file_name="mock_data.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
