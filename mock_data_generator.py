@@ -22,9 +22,6 @@ else:
 num_dims = st.number_input("🟦 Number of Dimension Tables:", min_value=1, max_value=10, value=3, key="num_dims")
 num_facts = st.number_input("🟥 Number of Fact Tables:", min_value=1, max_value=5, value=1, key="num_facts")
 
-# User chooses between AI chatbot or manual configuration
-mode = st.radio("How would you like to define the tables?", ["AI Chatbot Mode", "Manual Builder Mode"], key="mode")
-
 # Dictionary to store table configurations
 dim_tables = {}
 fact_tables = {}
@@ -73,51 +70,49 @@ with col1:
     st.subheader("🛠️ Manual Configuration")
     num_dims = st.number_input("🟦 Number of Dimension Tables:", min_value=1, max_value=10, value=3, key="manual_num_dims")
     num_facts = st.number_input("🟥 Number of Fact Tables:", min_value=1, max_value=5, value=1, key="manual_num_facts")
-    mode = st.radio("How would you like to define the tables?", ["AI Chatbot Mode", "Manual Builder Mode"], key="manual_mode")
 
 with col2:
-    # AI Chatbot Display
-    if mode == "AI Chatbot Mode":
-        st.title("The Mockbot")
+    # AI Chatbot Display (help section)
+    st.title("The Mockbot")
 
-        # Display previous messages
-        for message in st.session_state.messages:
-            with st.chat_message(message["role"]):
-                st.markdown(message["content"])
+    # Display previous messages
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
 
-        # User input handling
-        if prompt := st.chat_input("How can I help you with your star schema?"):
-            st.session_state.messages.append({"role": "user", "content": prompt})
-            with st.chat_message("user"):
-                st.markdown(prompt)
+    # User input handling (chatbot provides guidance during manual configuration)
+    if prompt := st.chat_input("How can I help you with your star schema?"):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
 
-            # Include number of dimensions and facts in context
-            full_prompt = f"{context}\nYou are working with {num_dims} dimension tables and {num_facts} fact tables.\n" + prompt
+        # Include number of dimensions and facts in context for the assistant
+        full_prompt = f"{context}\nYou are working with {num_dims} dimension tables and {num_facts} fact tables.\n" + prompt
 
-            with st.chat_message("assistant"):
-                # Using Google's Gemini API with context for specialization
-                client = genai.Client(api_key=st.secrets["google_api_key"])
-                response = client.models.generate_content(
-                    model="gemini-2.0-flash", contents=full_prompt
-                )
+        with st.chat_message("assistant"):
+            # Using Google's Gemini API with context for specialization
+            client = genai.Client(api_key=st.secrets["google_api_key"])
+            response = client.models.generate_content(
+                model="gemini-2.0-flash", contents=full_prompt
+            )
 
-                assistant_reply = response.text.strip()
-                st.write(assistant_reply)  # Display the response
-                st.session_state.messages.append({"role": "assistant", "content": assistant_reply})
+            assistant_reply = response.text.strip()
+            st.write(assistant_reply)  # Display the response
+            st.session_state.messages.append({"role": "assistant", "content": assistant_reply})
 
-                # Logic to capture and store the table configuration from the assistant's response
-                if "dimension table" in assistant_reply.lower():
-                    table_name = "Dim_Product"  # Example extraction from the response
-                    columns = ["Product_ID (Integer)", "Product_Name (String)", "Category (String)"]
+            # Logic to capture and store the table configuration from the assistant's response
+            if "dimension table" in assistant_reply.lower():
+                table_name = "Dim_Product"  # Example extraction from the response
+                columns = ["Product_ID (Integer)", "Product_Name (String)", "Category (String)"]
 
-                    dim_tables[table_name] = {
-                        "columns": [{"name": col.split(" ")[0], "type": col.split(" ")[1]} for col in columns],
-                        "num_rows": 100
-                    }
-                    st.session_state.schema_updated = True
+                dim_tables[table_name] = {
+                    "columns": [{"name": col.split(" ")[0], "type": col.split(" ")[1]} for col in columns],
+                    "num_rows": 100
+                }
+                st.session_state.schema_updated = True
 
-                    # Dynamically create a button to generate mock data
-                    st.session_state.generate_data_button = True
+                # Dynamically create a button to generate mock data
+                st.session_state.generate_data_button = True
 
 # Dynamically generate button and download the Excel file when the schema is ready
 if "generate_data_button" in st.session_state and st.session_state.generate_data_button:
