@@ -56,6 +56,7 @@ def get_faker_func(type_str, constant_value=None):
 # Predefined context for the assistant
 context = """
 You are an AI assistant specialized in generating an entire datamodel based on a star schema. After asking a bit input from the user, you generate a download button within the streamlit app in which you are operating as an API.
+Do not provide the Python and SQL code, provide the actual download button so that users can directly download data.
 """
 
 # **Google Gemini Chatbot Mode**
