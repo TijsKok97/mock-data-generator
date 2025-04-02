@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import faker
 import io
 import zipfile
 import os
