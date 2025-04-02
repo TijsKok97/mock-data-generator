@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from faker import Faker
-import genai  # Google's Gemini API library
+import google.genai as genai  # Import the google-genai library
 import random
 import io
 
