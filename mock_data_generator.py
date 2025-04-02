@@ -66,7 +66,7 @@ if "schema_updated" not in st.session_state:
     st.session_state.schema_updated = False
 
 if mode == "AI Chatbot Mode":
-    st.title("The Mockubot")
+    st.title("The Mockbot")
 
     # Display previous messages
     for message in st.session_state.messages:
@@ -74,7 +74,7 @@ if mode == "AI Chatbot Mode":
             st.markdown(message["content"])
 
     # User input handling
-    if prompt := st.chat_input("Hello, I am the Mockbot. I'm specialized in generating mock data for a dimensional model using a star schema. All I need is some contextual information and I will do the rest. Tell me about your case?"):
+    if prompt := st.chat_input("Hello, I am the Mockbot. Tell me about your case and I will help you by generating a dimensional model!"):
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
