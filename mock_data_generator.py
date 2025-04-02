@@ -66,7 +66,7 @@ if "schema_updated" not in st.session_state:
     st.session_state.schema_updated = False
 
 if mode == "AI Chatbot Mode":
-    st.title("The Mockbot")
+    st.title("The Mockubot")
 
     # Display previous messages
     for message in st.session_state.messages:
