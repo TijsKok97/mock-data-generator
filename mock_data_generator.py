@@ -5,11 +5,6 @@ import openai
 import random
 import io
 
-# Set your OpenAI API key from Streamlit secrets
-openai.api_key = st.secrets["api"]
-
-st.write(st.secrets)
-
 # Welcome message
 st.markdown("### 📊 Welcome to MockedUp 🚀")
 st.write("Define your dataset structure either manually or through AI-powered suggestions!")
@@ -148,6 +143,11 @@ if st.button("🚀 Generate Mock Data"):
             file_name="mock_data.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
+
+# Set your OpenAI API key from Streamlit secrets
+openai.api_key = st.secrets["api"]
+
+st.write(st.secrets)
 
 # **AI Chatbot Mode**
 if mode == "AI Chatbot Mode":
