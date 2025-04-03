@@ -6,7 +6,7 @@ import random
 import io
 
 # Welcome message
-st.markdown("### 📊 Welcome to Fuckedup 🚀")
+st.markdown("### 📊 Welcome to MockedUp 🚀")
 st.write("Define your dataset structure either manually or through AI-powered suggestions!")
 
 # Language selection for Faker
