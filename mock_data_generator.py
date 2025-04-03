@@ -4,7 +4,7 @@ from faker import Faker
 import google.genai as genai  # Import the google-genai library
 import random
 import io
-'''
+
 # Welcome message
 st.markdown("### 📊 Welcome to MockedUp 🚀")
 st.write("Define your dataset structure either manually or through AI-powered suggestions!")
@@ -165,8 +165,5 @@ if "generate_data_button" in st.session_state and st.session_state.generate_data
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
 
-'''
 
-age = st.slider("Leeftijd", 0, 100)
-st.write(f"Je bent {age} jaar oud")
 
