@@ -4,6 +4,7 @@ from faker import Faker
 import google.genai as genai  # Import the google-genai library
 import random
 import io
+import plotly.express as px
 '''
 # Welcome message
 st.markdown("### 📊 Welcome to MockedUp 🚀")
@@ -169,9 +170,6 @@ https://raw.githubusercontent.com/TijsKok97/mock-data-generator/refs/heads/main/
 
 '''
 
-import streamlit as st
-import pandas as pd
-import plotly.express as px
 
 # Data inladen
 @st.cache_data
