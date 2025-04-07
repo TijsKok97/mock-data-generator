@@ -168,16 +168,3 @@ if "generate_data_button" in st.session_state and st.session_state.generate_data
 
 
 '''
-
-st.title("Voorbeeldje 👇")
-
-keuze = st.radio(
-    "Wat vind je van deze training?",
-    [
-        "Nu al de beste van het jaar",
-        "Ik let nu al niet meer op",
-        "Wat gaan we zo eigenlijk eten?"
-    ]
-)
-
-st.write("🗨️ Jouw antwoord:", keuze)
