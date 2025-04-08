@@ -6,7 +6,6 @@ import random
 import io
 import plotly.express as px
 
-import streamlit as st
 
 # STEP 1: Create a class (our object blueprint)
 class Smoothie:
