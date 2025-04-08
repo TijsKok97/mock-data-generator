@@ -7,24 +7,36 @@ import io
 import plotly.express as px
 
 
-# STEP 1: Create a class (our object blueprint)
-class Smoothie:
-    def __init__(self, name, price):
-        self.name = name
-        self.price = price
+# Data inladen
+@st.cache_data
+def load_data():
+    url = "https://raw.githubusercontent.com/TijsKok97/mock-data-generator/refs/heads/main/exclusieve_schoenen_verkoop_met_locatie.csv"
+    return pd.read_csv(url)
 
-    def describe(self):
-        return f"{self.name} smoothie costs €{self.price:.2f}"
+df = load_data()
 
-# STEP 2: Let the user choose a smoothie
-smoothie_choice = st.selectbox("Choose a smoothie:", ["Strawberry", "Banana", "Mango"])
-price_dict = {"Strawberry": 3.50, "Banana": 3.00, "Mango": 4.00}
+st.title("🥿 Exclusieve Schoenen Verkoop Dashboard")
 
-# STEP 3: Create a Smoothie object
-my_smoothie = Smoothie(smoothie_choice, price_dict[smoothie_choice])
+# Filters
+landen = st.multiselect("Filter op land:", df['land'].unique(), default=df['land'].unique())
 
-# STEP 4: Use a method to show info
-st.subheader("Smoothie Info")
-st.write(my_smoothie.describe());
+filtered_df = df[df['land'].isin(landen)]
 
+# KPI’s
+st.metric("Totale omzet", f"€ {filtered_df['totaal_bedrag'].sum():,.2f}")
+st.metric("Aantal bestellingen", filtered_df['order_id'].nunique())
 
+# Grafiek: Omzet per merk
+fig = px.bar(filtered_df.groupby('merk')['totaal_bedrag'].sum().reset_index(),
+             x='merk', y='totaal_bedrag',
+             title='Omzet per merk', labels={'totaal_bedrag': 'Totale omzet (€)'})
+st.plotly_chart(fig)
+
+# Grafiek: Aantal aankopen per maand
+filtered_df['aankoopdatum'] = pd.to_datetime(filtered_df['aankoopdatum'])
+monthly_sales = filtered_df.resample('M', on='aankoopdatum')['order_id'].count().reset_index()
+fig2 = px.line(monthly_sales, x='aankoopdatum', y='order_id',
+               title='Aantal aankopen per maand', markers=True,
+               labels={'order_id': 'Aantal bestellingen'})
+st.plotly_chart(fig2)
+'''
