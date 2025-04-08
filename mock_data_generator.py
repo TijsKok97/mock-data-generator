@@ -6,7 +6,7 @@ import random
 import io
 import plotly.express as px
 
-
+eeeee
 # Data inladen
 @st.cache_data
 def load_data():
