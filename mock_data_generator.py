@@ -39,4 +39,3 @@ fig2 = px.line(monthly_sales, x='aankoopdatum', y='order_id',
                title='Aantal aankopen per maand', markers=True,
                labels={'order_id': 'Aantal bestellingen'})
 st.plotly_chart(fig2)
-'''
