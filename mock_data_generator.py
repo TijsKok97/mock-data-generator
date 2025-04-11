@@ -180,53 +180,60 @@ def draw_schema(dim_tables, fact_tables):
     dim_positions = {}
     fact_positions = {}
 
-    # Positioning logic
+    # Layout values
     spacing_x = 250
     spacing_y = 200
     width = 160
     height = 60
 
-    # Place dimension tables (top row)
+    # --- Draw Dimension Tables (top row) --- #
     for i, table_name in enumerate(dim_tables.keys()):
         x = i * spacing_x
         y = 0
-        dim_positions[table_name] = (x + width / 2, y + height)
+        center_x = x + width / 2
+        center_y = y + height / 2
+        dim_positions[table_name] = (center_x, y + height)
+
         fig.add_shape(type="rect", x0=x, y0=y, x1=x + width, y1=y + height,
                       line_color="blue", fillcolor="lightblue")
-        annotations.append(dict(x=x + width / 2, y=y + height / 2,
-                                text=table_name, showarrow=False, font=dict(size=12)))
+        annotations.append(dict(x=center_x, y=center_y, text=table_name,
+                                showarrow=False, font=dict(size=12), align="center"))
 
-    # Place fact tables (bottom row)
+    # --- Draw Fact Tables (bottom row) --- #
     for i, table_name in enumerate(fact_tables.keys()):
         x = i * spacing_x + 100
         y = spacing_y
-        fact_positions[table_name] = (x + width / 2, y)
+        center_x = x + width / 2
+        center_y = y + height / 2
+        fact_positions[table_name] = (center_x, y)
+
         fig.add_shape(type="rect", x0=x, y0=y, x1=x + width, y1=y + height,
                       line_color="red", fillcolor="mistyrose")
-        annotations.append(dict(x=x + width / 2, y=y + height / 2,
-                                text=table_name, showarrow=False, font=dict(size=12)))
+        annotations.append(dict(x=center_x, y=center_y, text=table_name,
+                                showarrow=False, font=dict(size=12), align="center"))
 
-        # Draw arrows from fact table to each linked dimension
+        # Draw arrows to dimensions
         for dim in fact_tables[table_name].get("linked_dimensions", []):
             if dim in dim_positions:
-                x0, y0 = x + width / 2, y
-                x1, y1 = dim_positions[dim]
-                fig.add_annotation(ax=x0, ay=y0, x=x1, y=y1,
-                                   xref="x", yref="y", axref="x", ayref="y",
-                                   showarrow=True, arrowhead=3, arrowsize=1,
-                                   arrowwidth=1.5, arrowcolor="gray")
+                dx, dy = dim_positions[dim]
+                fig.add_annotation(
+                    ax=center_x, ay=y, x=dx, y=dy,
+                    xref="x", yref="y", axref="x", ayref="y",
+                    showarrow=True, arrowhead=3, arrowsize=1,
+                    arrowwidth=1.5, arrowcolor="gray"
+                )
 
-    # Layout settings
     fig.update_layout(
         height=400,
         margin=dict(l=10, r=10, t=10, b=10),
-        xaxis=dict(visible=False, range=[-50, max(500, (len(dim_tables) + len(fact_tables)) * spacing_x)]),
+        xaxis=dict(visible=False, range=[-50, max(600, (len(dim_tables) + len(fact_tables)) * spacing_x)]),
         yaxis=dict(visible=False, range=[-100, spacing_y + height + 100]),
         annotations=annotations
     )
 
     st.subheader("🗺️ Visual Schema Diagram")
     st.plotly_chart(fig, use_container_width=True)
+
 
 if dim_tables or fact_tables:
     draw_schema(dim_tables, fact_tables)
