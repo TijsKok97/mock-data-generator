@@ -5,4 +5,3 @@ openpyxl
 xlsxwriter
 google.genai>=0.1.0
 plotly
-plotly.graph_object
