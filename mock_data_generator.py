@@ -27,13 +27,13 @@ st.write("Design your star schema with manual input and AI-powered help — side
 left, right = st.columns(2)
 
 # ------------------ LEFT: Manual Schema Builder ------------------ #
+# ------------------ LEFT: Manual Schema Builder ------------------ #
 with left:
     st.header("🛠️ Manual Builder Mode")
 
     language = st.selectbox("Choose language for data generation:", ["English", "Dutch"])
     fake = Faker("nl_NL") if language == "Dutch" else Faker("en_US")
 
-    # Define available data types
     data_types = {
         "String": lambda: fake.word(),
         "Integer": lambda: fake.random_int(min=1, max=1000),
@@ -59,61 +59,69 @@ with left:
     num_dims = st.number_input("🟦 Number of Dimension Tables:", min_value=1, max_value=10, value=2)
     num_facts = st.number_input("🟥 Number of Fact Tables:", min_value=1, max_value=5, value=1)
 
-    # Clear and rebuild dim_tables
-    st.session_state.dim_tables = {}
+    # Always rebuild from scratch
+    dim_tables = {}
+    fact_tables = {}
 
     st.subheader("Define Dimension Tables")
     for i in range(num_dims):
         with st.expander(f"🟦 Dimension Table {i+1}"):
-            table_name = st.text_input(f"Name for Dimension Table {i+1}", key=f"dim_name_{i}")
-            if not table_name:
-                continue
+            table_key = f"dim_{i}"
+            table_name = st.text_input(f"Name for Dimension Table {i+1}", key=f"{table_key}_name")
 
-            num_rows = st.number_input(f"Number of rows for {table_name}", min_value=10, max_value=5000, value=100, key=f"dim_rows_{i}")
-            num_cols = st.number_input(f"Number of columns (excluding ID)", min_value=1, max_value=10, value=3, key=f"dim_cols_{i}")
+            if not table_name.strip():
+                continue  # skip empty names
+
+            num_rows = st.number_input(f"Number of rows for {table_name}", min_value=10, max_value=5000, value=100, key=f"{table_key}_rows")
+            num_cols = st.number_input(f"Number of columns (excluding ID)", min_value=1, max_value=10, value=3, key=f"{table_key}_cols")
+
             columns = []
             for j in range(num_cols):
-                col_name = st.text_input(f"Column {j+1} name", key=f"dim_colname_{i}_{j}")
-                col_type = st.selectbox(f"Column {j+1} type", options=list(data_types.keys()), key=f"dim_coltype_{i}_{j}")
+                col_name = st.text_input(f"Column {j+1} name", key=f"{table_key}_colname_{j}")
+                col_type = st.selectbox(f"Column {j+1} type", options=list(data_types.keys()), key=f"{table_key}_coltype_{j}")
                 if col_name:
                     columns.append({"name": col_name, "type": col_type})
 
-            st.session_state.dim_tables[table_name] = {
+            dim_tables[table_name] = {
                 "columns": columns,
                 "num_rows": num_rows
             }
 
-    # Clear and rebuild fact_tables
-    st.session_state.fact_tables = {}
-
     st.subheader("Define Fact Tables")
     for i in range(num_facts):
         with st.expander(f"🟥 Fact Table {i+1}"):
-            table_name = st.text_input(f"Name for Fact Table {i+1}", key=f"fact_name_{i}")
-            if not table_name:
+            table_key = f"fact_{i}"
+            table_name = st.text_input(f"Name for Fact Table {i+1}", key=f"{table_key}_name")
+
+            if not table_name.strip():
                 continue
 
-            num_rows = st.number_input(f"Number of rows for {table_name}", min_value=10, max_value=5000, value=200, key=f"fact_rows_{i}")
+            num_rows = st.number_input(f"Number of rows for {table_name}", min_value=10, max_value=5000, value=200, key=f"{table_key}_rows")
+
             linked_dims = []
-            for dim_name in list(st.session_state.dim_tables.keys()):
-                if st.checkbox(f"Link to Dimension: {dim_name}", key=f"link_{i}_{dim_name}"):
+            for dim_name in dim_tables.keys():  # always use current valid names
+                if st.checkbox(f"Link to Dimension: {dim_name}", key=f"{table_key}_link_{dim_name}"):
                     linked_dims.append(dim_name)
 
-            num_cols = st.number_input(f"Additional fact columns", min_value=0, max_value=10, value=2, key=f"fact_cols_{i}")
+            num_cols = st.number_input(f"Additional fact columns", min_value=0, max_value=10, value=2, key=f"{table_key}_cols")
             columns = []
             for j in range(num_cols):
-                col_name = st.text_input(f"Fact Column {j+1} name", key=f"fact_colname_{i}_{j}")
-                col_type = st.selectbox(f"Fact Column {j+1} type", options=list(data_types.keys()), key=f"fact_coltype_{i}_{j}")
+                col_name = st.text_input(f"Fact Column {j+1} name", key=f"{table_key}_colname_{j}")
+                col_type = st.selectbox(f"Fact Column {j+1} type", options=list(data_types.keys()), key=f"{table_key}_coltype_{j}")
                 if col_name:
                     columns.append({"name": col_name, "type": col_type})
 
-            st.session_state.fact_tables[table_name] = {
+            fact_tables[table_name] = {
                 "columns": columns,
                 "num_rows": num_rows,
                 "linked_dimensions": linked_dims
             }
 
+    # Commit safe tables to session state
+    st.session_state.dim_tables = dim_tables
+    st.session_state.fact_tables = fact_tables
     st.session_state.generate_data_button = True
+
 
 # ------------------ RIGHT: AI Assistant ------------------ #
 with right:
