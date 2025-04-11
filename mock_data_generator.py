@@ -215,3 +215,6 @@ def draw_schema(dim_tables, fact_tables):
 
     st.subheader("🗺️ Visual Schema Diagram")
     st.plotly_chart(fig, use_container_width=True)
+
+if dim_tables or fact_tables:
+    draw_schema(dim_tables, fact_tables)
