@@ -5,6 +5,10 @@ import google.genai as genai
 import random
 import io
 import plotly.graph_objects as go
+import networkx as nx
+from pyvis.network import Network
+import tempfile
+import streamlit.components.v1 as components
 
 st.set_page_config(layout="wide")
 
@@ -26,7 +30,6 @@ st.write("Design your star schema with manual input and AI-powered help — side
 
 left, right = st.columns(2)
 
-# ------------------ LEFT: Manual Schema Builder ------------------ #
 # ------------------ LEFT: Manual Schema Builder ------------------ #
 with left:
     st.header("🛠️ Manual Builder Mode")
@@ -59,7 +62,6 @@ with left:
     num_dims = st.number_input("🟦 Number of Dimension Tables:", min_value=1, max_value=10, value=2)
     num_facts = st.number_input("🟥 Number of Fact Tables:", min_value=1, max_value=5, value=1)
 
-    # Always rebuild from scratch
     dim_tables = {}
     fact_tables = {}
 
@@ -68,9 +70,8 @@ with left:
         with st.expander(f"🟦 Dimension Table {i+1}"):
             table_key = f"dim_{i}"
             table_name = st.text_input(f"Name for Dimension Table {i+1}", key=f"{table_key}_name")
-
             if not table_name.strip():
-                continue  # skip empty names
+                continue
 
             num_rows = st.number_input(f"Number of rows for {table_name}", min_value=10, max_value=5000, value=100, key=f"{table_key}_rows")
             num_cols = st.number_input(f"Number of columns (excluding ID)", min_value=1, max_value=10, value=3, key=f"{table_key}_cols")
@@ -82,24 +83,20 @@ with left:
                 if col_name:
                     columns.append({"name": col_name, "type": col_type})
 
-            dim_tables[table_name] = {
-                "columns": columns,
-                "num_rows": num_rows
-            }
+            dim_tables[table_name] = {"columns": columns, "num_rows": num_rows}
 
     st.subheader("Define Fact Tables")
     for i in range(num_facts):
         with st.expander(f"🟥 Fact Table {i+1}"):
             table_key = f"fact_{i}"
             table_name = st.text_input(f"Name for Fact Table {i+1}", key=f"{table_key}_name")
-
             if not table_name.strip():
                 continue
 
             num_rows = st.number_input(f"Number of rows for {table_name}", min_value=10, max_value=5000, value=200, key=f"{table_key}_rows")
 
             linked_dims = []
-            for dim_name in dim_tables.keys():  # always use current valid names
+            for dim_name in dim_tables.keys():
                 if st.checkbox(f"Link to Dimension: {dim_name}", key=f"{table_key}_link_{dim_name}"):
                     linked_dims.append(dim_name)
 
@@ -117,16 +114,13 @@ with left:
                 "linked_dimensions": linked_dims
             }
 
-    # Commit safe tables to session state
     st.session_state.dim_tables = dim_tables
     st.session_state.fact_tables = fact_tables
     st.session_state.generate_data_button = True
 
-
 # ------------------ RIGHT: AI Assistant ------------------ #
 with right:
     st.header("🤖 AI Chat Assistant")
-
     context = f"""
     You are an AI assistant specialized in helping users design star schema data models.
     Assist in defining {num_dims} dimension tables and {num_facts} fact tables.
@@ -171,69 +165,28 @@ def generate_mock_data():
 
     return excel_data
 
-# ------------------ Visual Diagram ------------------ #
-def draw_schema(dim_tables, fact_tables):
-    # Filter out any empty-named tables
-    dim_tables = {name: config for name, config in dim_tables.items() if name.strip()}
-    fact_tables = {name: config for name, config in fact_tables.items() if name.strip()}
+# ------------------ New Schema Visualization (pyvis) ------------------ #
+def draw_schema_graph(dim_tables, fact_tables):
+    G = nx.Graph()
+    for dim in dim_tables:
+        G.add_node(dim, title=f"Dimension: {dim}", color='lightblue')
 
-    if not dim_tables and not fact_tables:
-        st.info("Define at least one dimension or fact table to view the schema diagram.")
-        return
-
-    fig = go.Figure()
-    annotations = []
-
-    dim_positions = {}
-    fact_positions = {}
-
-    spacing_x = 250
-    spacing_y = 200
-    width = 160
-    height = 60
-
-    # Draw dimension tables
-    for i, (table_name, config) in enumerate(dim_tables.items()):
-        x = i * spacing_x
-        y = 0
-        cx, cy = x + width / 2, y + height / 2
-        dim_positions[table_name] = (cx, y + height)
-
-        fig.add_shape(type="rect", x0=x, y0=y, x1=x + width, y1=y + height,
-                      line_color="blue", fillcolor="lightblue")
-        annotations.append(dict(x=cx, y=cy, text=table_name, showarrow=False, font=dict(size=12)))
-
-    # Draw fact tables and links
-    for i, (table_name, config) in enumerate(fact_tables.items()):
-        x = i * spacing_x + 100
-        y = spacing_y
-        cx, cy = x + width / 2, y + height / 2
-        fact_positions[table_name] = (cx, y)
-
-        fig.add_shape(type="rect", x0=x, y0=y, x1=x + width, y1=y + height,
-                      line_color="red", fillcolor="mistyrose")
-        annotations.append(dict(x=cx, y=cy, text=table_name, showarrow=False, font=dict(size=12)))
-
+    for fact, config in fact_tables.items():
+        G.add_node(fact, title=f"Fact: {fact}", color='salmon')
         for dim in config.get("linked_dimensions", []):
-            if dim in dim_positions:
-                dx, dy = dim_positions[dim]
-                fig.add_annotation(ax=cx, ay=y, x=dx, y=dy,
-                                   xref="x", yref="y", axref="x", ayref="y",
-                                   showarrow=True, arrowhead=3, arrowsize=1,
-                                   arrowwidth=1.5, arrowcolor="gray")
+            if dim in dim_tables:
+                G.add_edge(fact, dim)
 
-    fig.update_layout(
-        height=400,
-        margin=dict(l=10, r=10, t=10, b=10),
-        xaxis=dict(visible=False, range=[-50, 1000]),
-        yaxis=dict(visible=False, range=[-100, spacing_y + height + 100]),
-        annotations=annotations
-    )
+    net = Network(height="500px", width="100%", notebook=False, directed=False)
+    net.from_nx(G)
 
-    st.subheader("🗺️ Visual Schema Diagram")
-    st.plotly_chart(fig, use_container_width=True)
+    with tempfile.NamedTemporaryFile(mode="w+", delete=False, suffix=".html") as f:
+        net.save_graph(f.name)
+        html_file = f.name
 
-# ------------------ Download Excel ------------------ #
+    components.html(net.generate_html(), height=550)
+
+# ------------------ Generate + Download ------------------ #
 if st.session_state.generate_data_button and st.button("📥 Generate and Download Excel"):
     with st.spinner("Generating mock data..."):
         excel_data = generate_mock_data()
@@ -255,4 +208,5 @@ if st.session_state.generate_data_button and st.button("📥 Generate and Downlo
 
 # ------------------ Render Diagram ------------------ #
 if st.session_state.dim_tables or st.session_state.fact_tables:
-    draw_schema(st.session_state.dim_tables, st.session_state.fact_tables)
+    st.subheader("🗺️ Visual Schema Diagram")
+    draw_schema_graph(st.session_state.dim_tables, st.session_state.fact_tables)
