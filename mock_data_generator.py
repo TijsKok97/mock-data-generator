@@ -1,258 +1,176 @@
 import streamlit as st
 import pandas as pd
-from faker import Faker
-import google.genai as genai
-import random
 import io
+from faker import Faker
 import plotly.graph_objects as go
 
+# ------------------ Config ------------------ #
 st.set_page_config(layout="wide")
 
-# ------------------ Init Session State ------------------ #
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-if "schema_updated" not in st.session_state:
-    st.session_state.schema_updated = False
-if "generate_data_button" not in st.session_state:
-    st.session_state.generate_data_button = False
 if "dim_tables" not in st.session_state:
     st.session_state.dim_tables = {}
 if "fact_tables" not in st.session_state:
     st.session_state.fact_tables = {}
 
-# ------------------ App Header ------------------ #
-st.markdown("### 📊 Welcome to MockedUp 🚀")
-st.write("Design your star schema with manual input and AI-powered help — side by side!")
+fake = Faker()
+
+data_types = {
+    "String": lambda: fake.word(),
+    "Integer": lambda: fake.random_int(min=1, max=1000),
+    "Boolean": lambda: fake.random_element(elements=[0, 1]),
+    "City": lambda: fake.city(),
+    "Name": lambda: fake.name(),
+    "Date": lambda: fake.date_this_decade(),
+    "Email": lambda: fake.email(),
+    "Street Address": lambda: fake.street_address(),
+    "Country": lambda: fake.country(),
+    "Postal Code": lambda: fake.postcode(),
+    "Phone Number": lambda: fake.phone_number(),
+    "Company": lambda: fake.company(),
+    "Currency Amount": lambda: fake.pydecimal(left_digits=5, right_digits=2, positive=True),
+}
+
+def get_faker_func(type_str):
+    return data_types.get(type_str, lambda: "N/A")
+
+# ------------------ Layout ------------------ #
+st.title("🧱 Star Schema Builder")
 
 left, right = st.columns(2)
 
-# ------------------ LEFT: Manual Schema Builder ------------------ #
-# ------------------ LEFT: Manual Schema Builder ------------------ #
+# ------------------ Manual Inputs ------------------ #
 with left:
-    st.header("🛠️ Manual Builder Mode")
+    st.header("Manual Builder")
 
-    language = st.selectbox("Choose language for data generation:", ["English", "Dutch"])
-    fake = Faker("nl_NL") if language == "Dutch" else Faker("en_US")
+    num_dims = st.number_input("Number of Dimension Tables", 1, 10, 2, key="num_dims")
+    num_facts = st.number_input("Number of Fact Tables", 1, 5, 1, key="num_facts")
 
-    data_types = {
-        "String": lambda: fake.word(),
-        "Integer": lambda: fake.random_int(min=1, max=1000),
-        "Boolean": lambda: fake.random_element(elements=[0, 1]),
-        "City": lambda: fake.city(),
-        "Name": lambda: fake.name(),
-        "Date": lambda: fake.date_this_decade(),
-        "Email": lambda: fake.email(),
-        "Street Address": lambda: fake.street_address(),
-        "Country": lambda: fake.country(),
-        "Postal Code": lambda: fake.postcode(),
-        "Phone Number": lambda: fake.phone_number(),
-        "Company": lambda: fake.company(),
-        "Currency Amount": lambda: fake.pydecimal(left_digits=5, right_digits=2, positive=True),
-        "Custom": lambda value=None: value
-    }
-
-    def get_faker_func(type_str, constant_value=None):
-        if constant_value:
-            return lambda: constant_value
-        return data_types.get(type_str, lambda: "N/A")
-
-    num_dims = st.number_input("🟦 Number of Dimension Tables:", min_value=1, max_value=10, value=2)
-    num_facts = st.number_input("🟥 Number of Fact Tables:", min_value=1, max_value=5, value=1)
-
-    # Always rebuild from scratch
-    dim_tables = {}
-    fact_tables = {}
-
-    st.subheader("Define Dimension Tables")
+    # DIMENSIONS
     for i in range(num_dims):
-        with st.expander(f"🟦 Dimension Table {i+1}"):
-            table_key = f"dim_{i}"
-            table_name = st.text_input(f"Name for Dimension Table {i+1}", key=f"{table_key}_name")
+        key = f"dim_{i}"
+        with st.expander(f"Dimension Table {i+1}", expanded=True):
+            name = st.text_input(f"Name", key=f"{key}_name")
+            if name:
+                if key not in st.session_state.dim_tables:
+                    st.session_state.dim_tables[key] = {}
+                st.session_state.dim_tables[key]["name"] = name
+                st.session_state.dim_tables[key]["rows"] = st.number_input("Rows", 10, 5000, 100, key=f"{key}_rows")
+                cols = st.number_input("Columns", 1, 10, 3, key=f"{key}_cols")
+                columns = []
+                for j in range(cols):
+                    cname = st.text_input(f"Col {j+1} name", key=f"{key}_colname_{j}")
+                    ctype = st.selectbox(f"Col {j+1} type", options=list(data_types.keys()), key=f"{key}_coltype_{j}")
+                    if cname:
+                        columns.append({"name": cname, "type": ctype})
+                st.session_state.dim_tables[key]["columns"] = columns
 
-            if not table_name.strip():
-                continue  # skip empty names
-
-            num_rows = st.number_input(f"Number of rows for {table_name}", min_value=10, max_value=5000, value=100, key=f"{table_key}_rows")
-            num_cols = st.number_input(f"Number of columns (excluding ID)", min_value=1, max_value=10, value=3, key=f"{table_key}_cols")
-
-            columns = []
-            for j in range(num_cols):
-                col_name = st.text_input(f"Column {j+1} name", key=f"{table_key}_colname_{j}")
-                col_type = st.selectbox(f"Column {j+1} type", options=list(data_types.keys()), key=f"{table_key}_coltype_{j}")
-                if col_name:
-                    columns.append({"name": col_name, "type": col_type})
-
-            dim_tables[table_name] = {
-                "columns": columns,
-                "num_rows": num_rows
-            }
-
-    st.subheader("Define Fact Tables")
+    # FACTS
     for i in range(num_facts):
-        with st.expander(f"🟥 Fact Table {i+1}"):
-            table_key = f"fact_{i}"
-            table_name = st.text_input(f"Name for Fact Table {i+1}", key=f"{table_key}_name")
+        key = f"fact_{i}"
+        with st.expander(f"Fact Table {i+1}", expanded=True):
+            name = st.text_input(f"Name", key=f"{key}_name")
+            if name:
+                if key not in st.session_state.fact_tables:
+                    st.session_state.fact_tables[key] = {}
+                st.session_state.fact_tables[key]["name"] = name
+                st.session_state.fact_tables[key]["rows"] = st.number_input("Rows", 10, 5000, 200, key=f"{key}_rows")
 
-            if not table_name.strip():
-                continue
+                valid_dims = {
+                    k: v["name"]
+                    for k, v in st.session_state.dim_tables.items()
+                    if "name" in v and v["name"].strip() != ""
+                }
 
-            num_rows = st.number_input(f"Number of rows for {table_name}", min_value=10, max_value=5000, value=200, key=f"{table_key}_rows")
+                links = []
+                for dkey, dname in valid_dims.items():
+                    if st.checkbox(f"Link to {dname}", key=f"{key}_link_{dkey}"):
+                        links.append(dname)
+                st.session_state.fact_tables[key]["linked"] = links
 
-            linked_dims = []
-            for dim_name in dim_tables.keys():  # always use current valid names
-                if st.checkbox(f"Link to Dimension: {dim_name}", key=f"{table_key}_link_{dim_name}"):
-                    linked_dims.append(dim_name)
+                cols = st.number_input("Fact Columns", 0, 10, 2, key=f"{key}_cols")
+                columns = []
+                for j in range(cols):
+                    cname = st.text_input(f"Fact Col {j+1} name", key=f"{key}_colname_{j}")
+                    ctype = st.selectbox(f"Fact Col {j+1} type", options=list(data_types.keys()), key=f"{key}_coltype_{j}")
+                    if cname:
+                        columns.append({"name": cname, "type": ctype})
+                st.session_state.fact_tables[key]["columns"] = columns
 
-            num_cols = st.number_input(f"Additional fact columns", min_value=0, max_value=10, value=2, key=f"{table_key}_cols")
-            columns = []
-            for j in range(num_cols):
-                col_name = st.text_input(f"Fact Column {j+1} name", key=f"{table_key}_colname_{j}")
-                col_type = st.selectbox(f"Fact Column {j+1} type", options=list(data_types.keys()), key=f"{table_key}_coltype_{j}")
-                if col_name:
-                    columns.append({"name": col_name, "type": col_type})
+# ------------------ Generate Data ------------------ #
+def generate_data():
+    data = {}
+    # Dimension tables
+    for d in st.session_state.dim_tables.values():
+        if not d.get("name"):
+            continue
+        df = pd.DataFrame({"ID": range(1, d["rows"] + 1)})
+        for col in d.get("columns", []):
+            df[col["name"]] = [get_faker_func(col["type"])() for _ in range(d["rows"])]
+        data[d["name"]] = df
 
-            fact_tables[table_name] = {
-                "columns": columns,
-                "num_rows": num_rows,
-                "linked_dimensions": linked_dims
-            }
+    # Fact tables
+    for f in st.session_state.fact_tables.values():
+        if not f.get("name"):
+            continue
+        df = pd.DataFrame({"Fact_ID": range(1, f["rows"] + 1)})
+        for dim_name in f.get("linked", []):
+            if dim_name in data:
+                df[f"{dim_name}_ID"] = data[dim_name]["ID"].sample(n=f["rows"], replace=True).values
+        for col in f.get("columns", []):
+            df[col["name"]] = [get_faker_func(col["type"])() for _ in range(f["rows"])]
+        data[f["name"]] = df
+    return data
 
-    # Commit safe tables to session state
-    st.session_state.dim_tables = dim_tables
-    st.session_state.fact_tables = fact_tables
-    st.session_state.generate_data_button = True
+if left.button("Generate Mock Data"):
+    excel_data = generate_data()
+    buffer = io.BytesIO()
+    with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+        for tname, df in excel_data.items():
+            df.to_excel(writer, sheet_name=tname, index=False)
+    buffer.seek(0)
+    st.download_button("📥 Download Excel", data=buffer, file_name="mock_data.xlsx")
 
-
-# ------------------ RIGHT: AI Assistant ------------------ #
-with right:
-    st.header("🤖 AI Chat Assistant")
-
-    context = f"""
-    You are an AI assistant specialized in helping users design star schema data models.
-    Assist in defining {num_dims} dimension tables and {num_facts} fact tables.
-    """
-
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
-
-    if prompt := st.chat_input("How can I help with your schema?"):
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
-
-        with st.chat_message("assistant"):
-            full_prompt = context + "\n" + prompt
-            client = genai.Client(api_key=st.secrets["google_api_key"])
-            response = client.models.generate_content(model="gemini-2.0-flash", contents=full_prompt)
-            assistant_reply = response.text.strip()
-            st.markdown(assistant_reply)
-            st.session_state.messages.append({"role": "assistant", "content": assistant_reply})
-
-# ------------------ Generate Mock Data ------------------ #
-def generate_mock_data():
-    excel_data = {}
-    for table_name, config in st.session_state.dim_tables.items():
-        dim_data = {"ID": range(1, config["num_rows"] + 1)}
-        for col in config["columns"]:
-            dim_data[col['name']] = [get_faker_func(col['type'])() for _ in range(config["num_rows"])]
-        excel_data[table_name] = pd.DataFrame(dim_data)
-
-    for table_name, config in st.session_state.fact_tables.items():
-        fact_df = pd.DataFrame()
-        fact_df["Fact_ID"] = range(1, config["num_rows"] + 1)
-        for dim_name in config["linked_dimensions"]:
-            dim_id_col = f"{dim_name}_ID"
-            fact_df[dim_id_col] = excel_data[dim_name]["ID"].sample(n=config["num_rows"], replace=True).values
-        for col in config["columns"]:
-            if col["name"] != "Fact_ID" and not col["name"].endswith("_ID"):
-                fact_df[col["name"]] = [get_faker_func(col["type"])() for _ in range(config["num_rows"])]
-        excel_data[table_name] = fact_df
-
-    return excel_data
-
-# ------------------ Visual Diagram ------------------ #
-def draw_schema(dim_tables, fact_tables):
-    # Filter out any empty-named tables
-    dim_tables = {name: config for name, config in dim_tables.items() if name.strip()}
-    fact_tables = {name: config for name, config in fact_tables.items() if name.strip()}
-
-    if not dim_tables and not fact_tables:
-        st.info("Define at least one dimension or fact table to view the schema diagram.")
-        return
-
+# ------------------ Visual Schema ------------------ #
+def draw_schema():
     fig = go.Figure()
+    dim_pos = {}
     annotations = []
-
-    dim_positions = {}
-    fact_positions = {}
 
     spacing_x = 250
     spacing_y = 200
     width = 160
     height = 60
 
-    # Draw dimension tables
-    for i, (table_name, config) in enumerate(dim_tables.items()):
+    dims = [d for d in st.session_state.dim_tables.values() if d.get("name")]
+    facts = [f for f in st.session_state.fact_tables.values() if f.get("name")]
+
+    for i, d in enumerate(dims):
         x = i * spacing_x
         y = 0
-        cx, cy = x + width / 2, y + height / 2
-        dim_positions[table_name] = (cx, y + height)
+        cx = x + width / 2
+        cy = y + height / 2
+        dim_pos[d["name"]] = (cx, y + height)
+        fig.add_shape(type="rect", x0=x, y0=y, x1=x+width, y1=y+height, line_color="blue", fillcolor="lightblue")
+        annotations.append(dict(x=cx, y=cy, text=d["name"], showarrow=False))
 
-        fig.add_shape(type="rect", x0=x, y0=y, x1=x + width, y1=y + height,
-                      line_color="blue", fillcolor="lightblue")
-        annotations.append(dict(x=cx, y=cy, text=table_name, showarrow=False, font=dict(size=12)))
-
-    # Draw fact tables and links
-    for i, (table_name, config) in enumerate(fact_tables.items()):
+    for i, f in enumerate(facts):
         x = i * spacing_x + 100
         y = spacing_y
-        cx, cy = x + width / 2, y + height / 2
-        fact_positions[table_name] = (cx, y)
+        cx = x + width / 2
+        cy = y + height / 2
+        fig.add_shape(type="rect", x0=x, y0=y, x1=x+width, y1=y+height, line_color="red", fillcolor="mistyrose")
+        annotations.append(dict(x=cx, y=cy, text=f["name"], showarrow=False))
 
-        fig.add_shape(type="rect", x0=x, y0=y, x1=x + width, y1=y + height,
-                      line_color="red", fillcolor="mistyrose")
-        annotations.append(dict(x=cx, y=cy, text=table_name, showarrow=False, font=dict(size=12)))
-
-        for dim in config.get("linked_dimensions", []):
-            if dim in dim_positions:
-                dx, dy = dim_positions[dim]
+        for dim_name in f.get("linked", []):
+            if dim_name in dim_pos:
+                dx, dy = dim_pos[dim_name]
                 fig.add_annotation(ax=cx, ay=y, x=dx, y=dy,
-                                   xref="x", yref="y", axref="x", ayref="y",
-                                   showarrow=True, arrowhead=3, arrowsize=1,
-                                   arrowwidth=1.5, arrowcolor="gray")
+                                   showarrow=True, arrowhead=3, arrowcolor="gray")
 
-    fig.update_layout(
-        height=400,
-        margin=dict(l=10, r=10, t=10, b=10),
-        xaxis=dict(visible=False, range=[-50, 1000]),
-        yaxis=dict(visible=False, range=[-100, spacing_y + height + 100]),
-        annotations=annotations
-    )
-
-    st.subheader("🗺️ Visual Schema Diagram")
+    fig.update_layout(height=400, showlegend=False, annotations=annotations,
+                      xaxis=dict(visible=False), yaxis=dict(visible=False),
+                      margin=dict(l=10, r=10, t=10, b=10))
+    st.subheader("🗺️ Schema Diagram")
     st.plotly_chart(fig, use_container_width=True)
 
-# ------------------ Download Excel ------------------ #
-if st.session_state.generate_data_button and st.button("📥 Generate and Download Excel"):
-    with st.spinner("Generating mock data..."):
-        excel_data = generate_mock_data()
-        if not excel_data:
-            st.error("No data was generated.")
-        else:
-            buffer = io.BytesIO()
-            with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-                for table_name, df in excel_data.items():
-                    df.to_excel(writer, sheet_name=table_name, index=False)
-            st.success("✅ Excel file is ready!")
-            buffer.seek(0)
-            st.download_button(
-                label="Download Mock Excel File",
-                data=buffer,
-                file_name="mock_data.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
-
-# ------------------ Render Diagram ------------------ #
-if st.session_state.dim_tables or st.session_state.fact_tables:
-    draw_schema(st.session_state.dim_tables, st.session_state.fact_tables)
+draw_schema()
