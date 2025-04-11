@@ -1,11 +1,8 @@
-streamlit>=1.0
-pandas>=1.0
-faker>=15.0
-openpyxl
-xlsxwriter
-google.genai>=0.1.0
+streamlit
+pandas
+faker
+google-generativeai
 plotly
-pyvis.network
-tempfile
-streamlit.components.v1
+pyvis
 networkx
+xlsxwriter
