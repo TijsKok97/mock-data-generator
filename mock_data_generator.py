@@ -165,6 +165,10 @@ def generate_mock_data():
 
 # ------------------ Visual Diagram ------------------ #
 def draw_schema(dim_tables, fact_tables):
+    # Filter out any empty-named tables
+    dim_tables = {name: config for name, config in dim_tables.items() if name.strip()}
+    fact_tables = {name: config for name, config in fact_tables.items() if name.strip()}
+
     if not dim_tables and not fact_tables:
         st.info("Define at least one dimension or fact table to view the schema diagram.")
         return
@@ -180,25 +184,29 @@ def draw_schema(dim_tables, fact_tables):
     width = 160
     height = 60
 
-    for i, table_name in enumerate(dim_tables.keys()):
+    # Draw dimension tables
+    for i, (table_name, config) in enumerate(dim_tables.items()):
         x = i * spacing_x
         y = 0
         cx, cy = x + width / 2, y + height / 2
         dim_positions[table_name] = (cx, y + height)
+
         fig.add_shape(type="rect", x0=x, y0=y, x1=x + width, y1=y + height,
                       line_color="blue", fillcolor="lightblue")
         annotations.append(dict(x=cx, y=cy, text=table_name, showarrow=False, font=dict(size=12)))
 
-    for i, table_name in enumerate(fact_tables.keys()):
+    # Draw fact tables and links
+    for i, (table_name, config) in enumerate(fact_tables.items()):
         x = i * spacing_x + 100
         y = spacing_y
         cx, cy = x + width / 2, y + height / 2
         fact_positions[table_name] = (cx, y)
+
         fig.add_shape(type="rect", x0=x, y0=y, x1=x + width, y1=y + height,
                       line_color="red", fillcolor="mistyrose")
         annotations.append(dict(x=cx, y=cy, text=table_name, showarrow=False, font=dict(size=12)))
 
-        for dim in fact_tables[table_name].get("linked_dimensions", []):
+        for dim in config.get("linked_dimensions", []):
             if dim in dim_positions:
                 dx, dy = dim_positions[dim]
                 fig.add_annotation(ax=cx, ay=y, x=dx, y=dy,
