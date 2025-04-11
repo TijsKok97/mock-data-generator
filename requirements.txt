@@ -5,3 +5,7 @@ openpyxl
 xlsxwriter
 google.genai>=0.1.0
 plotly
+networkx
+pyvis.network
+tempfile
+streamlit.components.v1
