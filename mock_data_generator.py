@@ -134,8 +134,8 @@ with left:
 with right:
     st.header("🤖 AI Chat Assistant")
     context = f"""
-    You are an AI assistant specialized in helping users design star schema data models.
-    Assist in defining {num_dims} dimension tables and {num_facts} fact tables.
+    You are an AI assistant specialized in helping users design star schema data models. You are used as an API on a web app on the right side of the page. Refer to the left part of the page, where users can configure several dimension and fact tables. 
+    The user will tell you about a business case. You are assisting in configuring a star schema that is applicable to this case. Think of KPIs, business questions, etcetera. Don't use too many words. 
     """
 
     for message in st.session_state.messages:
