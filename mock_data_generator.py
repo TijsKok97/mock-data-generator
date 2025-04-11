@@ -23,6 +23,8 @@ if "dim_tables" not in st.session_state:
     st.session_state.dim_tables = {}
 if "fact_tables" not in st.session_state:
     st.session_state.fact_tables = {}
+if "dim_links" not in st.session_state:
+    st.session_state.dim_links = []
 
 # ------------------ App Header ------------------ #
 st.markdown("### 📊 Welcome to MockedUp 🚀")
@@ -64,6 +66,7 @@ with left:
 
     dim_tables = {}
     fact_tables = {}
+    dim_links = []
 
     st.subheader("Define Dimension Tables")
     for i in range(num_dims):
@@ -84,6 +87,14 @@ with left:
                     columns.append({"name": col_name, "type": col_type})
 
             dim_tables[table_name] = {"columns": columns, "num_rows": num_rows}
+
+            # Add option to link this dimension to others
+            st.markdown("🔗 Link to Other Dimensions:")
+            for other_table in dim_tables.keys():
+                if other_table != table_name:
+                    key = f"{table_key}_link_dim_{other_table}"
+                    if st.checkbox(f"Link to: {other_table}", key=key):
+                        dim_links.append((table_name, other_table))
 
     st.subheader("Define Fact Tables")
     for i in range(num_facts):
@@ -116,6 +127,7 @@ with left:
 
     st.session_state.dim_tables = dim_tables
     st.session_state.fact_tables = fact_tables
+    st.session_state.dim_links = dim_links
     st.session_state.generate_data_button = True
 
 # ------------------ RIGHT: AI Assistant ------------------ #
@@ -165,9 +177,10 @@ def generate_mock_data():
 
     return excel_data
 
-# ------------------ New Schema Visualization (pyvis) ------------------ #
+# ------------------ Visual Schema Graph ------------------ #
 def draw_schema_graph(dim_tables, fact_tables):
     G = nx.Graph()
+
     for dim in dim_tables:
         G.add_node(dim, title=f"Dimension: {dim}", color='lightblue')
 
@@ -175,7 +188,11 @@ def draw_schema_graph(dim_tables, fact_tables):
         G.add_node(fact, title=f"Fact: {fact}", color='salmon')
         for dim in config.get("linked_dimensions", []):
             if dim in dim_tables:
-                G.add_edge(fact, dim)
+                G.add_edge(fact, dim, color="gray")
+
+    for src, tgt in st.session_state.get("dim_links", []):
+        if src in dim_tables and tgt in dim_tables:
+            G.add_edge(src, tgt, color="blue")
 
     net = Network(height="500px", width="100%", notebook=False, directed=False)
     net.from_nx(G)
