@@ -7,32 +7,22 @@ import io
 
 st.set_page_config(layout="wide")
 
-# ------------------ Setup ------------------ #
-st.markdown("### 📊 Welcome to MockedUp 🚀")
-st.write("Design your star schema with manual input and AI-powered help — side by side!")
-
-language = st.selectbox("Choose language for data generation:", ["English", "Dutch"])
-fake = Faker("nl_NL") if language == "Dutch" else Faker("en_US")
-
-num_dims = st.number_input("🟦 Number of Dimension Tables:", min_value=1, max_value=10, value=2)
-num_facts = st.number_input("🟥 Number of Fact Tables:", min_value=1, max_value=5, value=1)
-
 # ------------------ Data Types ------------------ #
 data_types = {
-    "String": fake.word,
+    "String": lambda: fake.word(),
     "Integer": lambda: fake.random_int(min=1, max=1000),
     "Boolean": lambda: fake.random_element(elements=[0, 1]),
-    "City": fake.city,
-    "Name": fake.name,
-    "Date": fake.date_this_decade,
-    "Email": fake.email,
-    "Street Address": fake.street_address,
-    "Country": fake.country,
-    "Postal Code": fake.postcode,
-    "Phone Number": fake.phone_number,
-    "Company": fake.company,
+    "City": lambda: fake.city(),
+    "Name": lambda: fake.name(),
+    "Date": lambda: fake.date_this_decade(),
+    "Email": lambda: fake.email(),
+    "Street Address": lambda: fake.street_address(),
+    "Country": lambda: fake.country(),
+    "Postal Code": lambda: fake.postcode(),
+    "Phone Number": lambda: fake.phone_number(),
+    "Company": lambda: fake.company(),
     "Currency Amount": lambda: fake.pydecimal(left_digits=5, right_digits=2, positive=True),
-    "Custom": lambda value: value
+    "Custom": lambda value=None: value
 }
 
 def get_faker_func(type_str, constant_value=None):
@@ -51,12 +41,21 @@ if "generate_data_button" not in st.session_state:
 dim_tables = {}
 fact_tables = {}
 
-# ------------------ Layout Columns ------------------ #
+# ------------------ Layout ------------------ #
+st.markdown("### 📊 Welcome to MockedUp 🚀")
+st.write("Design your star schema with manual input and AI-powered help — side by side!")
+
 left, right = st.columns(2)
 
 # ------------------ LEFT: Manual Mode ------------------ #
 with left:
     st.header("🛠️ Manual Builder Mode")
+
+    language = st.selectbox("Choose language for data generation:", ["English", "Dutch"])
+    fake = Faker("nl_NL") if language == "Dutch" else Faker("en_US")
+
+    num_dims = st.number_input("🟦 Number of Dimension Tables:", min_value=1, max_value=10, value=2)
+    num_facts = st.number_input("🟥 Number of Fact Tables:", min_value=1, max_value=5, value=1)
 
     st.subheader("Define Dimension Tables")
     for i in range(num_dims):
@@ -101,7 +100,7 @@ with left:
 
     st.session_state.generate_data_button = True
 
-# ------------------ RIGHT: AI Chatbot ------------------ #
+# ------------------ RIGHT: AI Assistant ------------------ #
 with right:
     st.header("🤖 AI Chat Assistant")
 
