@@ -4,6 +4,7 @@ from faker import Faker
 import google.genai as genai
 import random
 import io
+import plotly.graph_objects as go
 
 st.set_page_config(layout="wide")
 
@@ -167,3 +168,50 @@ if st.session_state.generate_data_button and st.button("📥 Generate and Downlo
                 file_name="mock_data.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
+
+def draw_schema(dim_tables, fact_tables):
+    fig = go.Figure()
+
+    node_x = []
+    node_y = []
+    annotations = []
+    lines = []
+
+    spacing_x = 200
+    spacing_y = 200
+    width = 150
+    height = 60
+
+    # Position dimension tables on top row
+    for i, (table_name, config) in enumerate(dim_tables.items()):
+        x = i * spacing_x
+        y = 0
+        fig.add_shape(type="rect", x0=x, y0=y, x1=x+width, y1=y+height, line_color="blue", fillcolor="lightblue")
+        annotations.append(dict(x=x+width/2, y=y+height/2, text=table_name, showarrow=False, font=dict(size=12)))
+        dim_tables[table_name]["pos"] = (x+width/2, y+height)
+
+    # Position fact tables below
+    for i, (fact_name, config) in enumerate(fact_tables.items()):
+        x = i * spacing_x + 100
+        y = spacing_y
+        fig.add_shape(type="rect", x0=x, y0=y, x1=x+width, y1=y+height, line_color="red", fillcolor="mistyrose")
+        annotations.append(dict(x=x+width/2, y=y+height/2, text=fact_name, showarrow=False, font=dict(size=12)))
+        fx, fy = x+width/2, y  # Bottom center of box
+
+        # Draw lines to related dimension tables
+        for dim_name in config["linked_dimensions"]:
+            dx, dy = dim_tables[dim_name]["pos"]
+            fig.add_shape(type="line", x0=fx, y0=fy, x1=dx, y1=dy, line=dict(color="gray", width=2))
+
+    fig.update_layout(
+        height=400,
+        margin=dict(l=20, r=20, t=20, b=20),
+        showlegend=False,
+        xaxis=dict(visible=False),
+        yaxis=dict(visible=False),
+        shapes=fig.layout.shapes + tuple(),
+        annotations=annotations
+    )
+
+    st.subheader("🗺️ Visual Schema Diagram")
+    st.plotly_chart(fig, use_container_width=True)
