@@ -170,46 +170,58 @@ if st.session_state.generate_data_button and st.button("📥 Generate and Downlo
             )
 
 def draw_schema(dim_tables, fact_tables):
+    if not dim_tables and not fact_tables:
+        st.info("Define at least one dimension or fact table to view the schema diagram.")
+        return
+
     fig = go.Figure()
-
-    node_x = []
-    node_y = []
     annotations = []
-    lines = []
 
-    spacing_x = 200
+    dim_positions = {}
+    fact_positions = {}
+
+    # Positioning logic
+    spacing_x = 250
     spacing_y = 200
-    width = 150
+    width = 160
     height = 60
 
-    # Position dimension tables on top row
-    for i, (table_name, config) in enumerate(dim_tables.items()):
+    # Place dimension tables (top row)
+    for i, table_name in enumerate(dim_tables.keys()):
         x = i * spacing_x
         y = 0
-        fig.add_shape(type="rect", x0=x, y0=y, x1=x+width, y1=y+height, line_color="blue", fillcolor="lightblue")
-        annotations.append(dict(x=x+width/2, y=y+height/2, text=table_name, showarrow=False, font=dict(size=12)))
-        dim_tables[table_name]["pos"] = (x+width/2, y+height)
+        dim_positions[table_name] = (x + width / 2, y + height)
+        fig.add_shape(type="rect", x0=x, y0=y, x1=x + width, y1=y + height,
+                      line_color="blue", fillcolor="lightblue")
+        annotations.append(dict(x=x + width / 2, y=y + height / 2,
+                                text=table_name, showarrow=False, font=dict(size=12)))
 
-    # Position fact tables below
-    for i, (fact_name, config) in enumerate(fact_tables.items()):
+    # Place fact tables (bottom row)
+    for i, table_name in enumerate(fact_tables.keys()):
         x = i * spacing_x + 100
         y = spacing_y
-        fig.add_shape(type="rect", x0=x, y0=y, x1=x+width, y1=y+height, line_color="red", fillcolor="mistyrose")
-        annotations.append(dict(x=x+width/2, y=y+height/2, text=fact_name, showarrow=False, font=dict(size=12)))
-        fx, fy = x+width/2, y  # Bottom center of box
+        fact_positions[table_name] = (x + width / 2, y)
+        fig.add_shape(type="rect", x0=x, y0=y, x1=x + width, y1=y + height,
+                      line_color="red", fillcolor="mistyrose")
+        annotations.append(dict(x=x + width / 2, y=y + height / 2,
+                                text=table_name, showarrow=False, font=dict(size=12)))
 
-        # Draw lines to related dimension tables
-        for dim_name in config["linked_dimensions"]:
-            dx, dy = dim_tables[dim_name]["pos"]
-            fig.add_shape(type="line", x0=fx, y0=fy, x1=dx, y1=dy, line=dict(color="gray", width=2))
+        # Draw arrows from fact table to each linked dimension
+        for dim in fact_tables[table_name].get("linked_dimensions", []):
+            if dim in dim_positions:
+                x0, y0 = x + width / 2, y
+                x1, y1 = dim_positions[dim]
+                fig.add_annotation(ax=x0, ay=y0, x=x1, y=y1,
+                                   xref="x", yref="y", axref="x", ayref="y",
+                                   showarrow=True, arrowhead=3, arrowsize=1,
+                                   arrowwidth=1.5, arrowcolor="gray")
 
+    # Layout settings
     fig.update_layout(
         height=400,
-        margin=dict(l=20, r=20, t=20, b=20),
-        showlegend=False,
-        xaxis=dict(visible=False),
-        yaxis=dict(visible=False),
-        shapes=fig.layout.shapes + tuple(),
+        margin=dict(l=10, r=10, t=10, b=10),
+        xaxis=dict(visible=False, range=[-50, max(500, (len(dim_tables) + len(fact_tables)) * spacing_x)]),
+        yaxis=dict(visible=False, range=[-100, spacing_y + height + 100]),
         annotations=annotations
     )
 
